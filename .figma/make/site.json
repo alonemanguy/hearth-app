@@ -1,0 +1,10 @@
+{
+  "description": "Helps homeowners track and manage home maintenance tasks, appliances, and warranties to ensure timely upkeep and avoid missed schedules.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
