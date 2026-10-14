@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './lib/auth';
 import Home from './pages/Home';
 import Add from './pages/Add';
@@ -11,32 +11,57 @@ import Appliances from './pages/Appliances';
 import ApplianceDetail from './pages/ApplianceDetail';
 import Notifications from './pages/Notifications';
 import NotificationPreferences from './pages/NotificationPreferences';
+import Settings from './pages/Settings';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import Terms from './pages/Terms';
+import DeleteAccount from './pages/DeleteAccount';
 import TabBar from './components/TabBar';
+import CookieConsent from './components/CookieConsent';
+import { Icon } from './lib/icons';
 
 function AppRoutes() {
   const { user, loading, hasOnboarded } = useAuth();
+  const location = useLocation();
+
+  // Public routes — accessible without auth or onboarding
+  const isPublicLegal =
+    location.pathname === '/privacy' || location.pathname === '/terms';
+
+  if (isPublicLegal) {
+    return (
+      <>
+        <Routes>
+          <Route path="/privacy" element={<PrivacyPolicy />} />
+          <Route path="/terms" element={<Terms />} />
+        </Routes>
+        <CookieConsent />
+      </>
+    );
+  }
 
   if (loading) {
     return (
       <div className="auth-loading">
-        <div className="auth-logo">🏠</div>
+        <Icon name="home" size={48} strokeWidth={1.5} />
       </div>
     );
   }
 
   if (!user) {
     return (
-      <Routes>
-        <Route path="*" element={<Login />} />
-      </Routes>
+      <>
+        <Login />
+        <CookieConsent />
+      </>
     );
   }
 
   if (!hasOnboarded) {
     return (
-      <Routes>
-        <Route path="*" element={<Onboarding />} />
-      </Routes>
+      <>
+        <Onboarding />
+        <CookieConsent />
+      </>
     );
   }
 
@@ -51,10 +76,16 @@ function AppRoutes() {
         <Route path="/appliances" element={<Appliances />} />
         <Route path="/appliance/:id" element={<ApplianceDetail />} />
         <Route path="/notifications" element={<Notifications />} />
-        <Route path="/notification-preferences" element={<NotificationPreferences />} />
+        <Route
+          path="/notification-preferences"
+          element={<NotificationPreferences />}
+        />
+        <Route path="/settings" element={<Settings />} />
+        <Route path="/delete-account" element={<DeleteAccount />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <TabBar />
+      <CookieConsent />
     </>
   );
 }

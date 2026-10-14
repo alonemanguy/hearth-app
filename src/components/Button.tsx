@@ -2,16 +2,25 @@ import { motion, useReducedMotion, AnimatePresence } from 'motion/react';
 import { ReactNode, useState, MouseEvent } from 'react';
 import { springs } from '../lib/motion';
 
+type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
+
 type Props = {
-  variant?: 'primary' | 'secondary' | 'ghost';
+  variant?: Variant;
   children: ReactNode;
   onClick?: () => void;
   disabled?: boolean;
+  type?: 'button' | 'submit';
 };
 
 type Ripple = { id: number; x: number; y: number };
 
-export default function Button({ variant = 'primary', children, onClick, disabled }: Props) {
+export function Button({
+  variant = 'primary',
+  children,
+  onClick,
+  disabled,
+  type = 'button',
+}: Props) {
   const reduce = useReducedMotion();
   const [ripples, setRipples] = useState<Ripple[]>([]);
 
@@ -27,20 +36,15 @@ export default function Button({ variant = 'primary', children, onClick, disable
 
   return (
     <motion.button
+      type={type}
       className={`btn btn--${variant}`}
       onClick={onClick}
       disabled={disabled}
       onPointerDown={handlePointerDown}
       whileTap={
-        disabled || reduce
-          ? undefined
-          : { scaleX: 0.97, scaleY: 0.94 }
+        disabled || reduce ? undefined : { scaleX: 0.97, scaleY: 0.94 }
       }
-      whileHover={
-        disabled || reduce
-          ? undefined
-          : { scale: 1.01 }
-      }
+      whileHover={disabled || reduce ? undefined : { scale: 1.01 }}
       transition={springs.snappy}
       style={{ position: 'relative', overflow: 'hidden' }}
     >
@@ -57,7 +61,19 @@ export default function Button({ variant = 'primary', children, onClick, disable
           />
         ))}
       </AnimatePresence>
-      <span style={{ position: 'relative', zIndex: 1 }}>{children}</span>
+      <span
+        style={{
+          position: 'relative',
+          zIndex: 1,
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 8,
+        }}
+      >
+        {children}
+      </span>
     </motion.button>
   );
 }
+
+export default Button;

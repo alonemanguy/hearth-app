@@ -46,11 +46,12 @@ export default function Profile() {
     { icon: 'appliance', label: 'My Appliances', to: '/appliances' },
     { icon: 'bell', label: 'Notifications', to: '/notification-preferences' },
     {
-      icon: 'settings',
+      icon: 'compass',
       label: 'Help level',
       onClick: openSheet,
       value: LABELS[helpLevel],
     },
+    { icon: 'settings', label: 'Settings', to: '/settings' },
   ];
 
   const sheetPortal =
