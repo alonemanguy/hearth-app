@@ -48,6 +48,7 @@ export default function Profile() {
     { icon: 'home', label: 'My Home', to: '/property' },
     { icon: 'appliance', label: 'My Appliances', to: '/appliances' },
     { icon: 'warranty', label: 'Warranties', to: '/warranties' },
+    { icon: 'household', label: 'Household', to: '/household' },
     { icon: 'bell', label: 'Notifications', to: '/notification-preferences' },
     {
       icon: 'compass',
@@ -136,7 +137,7 @@ export default function Profile() {
             transition={{
               duration: 0.35,
               ease: easings.easeOutExpo,
-              delay: reduce ? 0 : 0.3,
+              delay: reduce ? 0 : 0.4,
             }}
           >
             <span className="menu-icon">

@@ -17,6 +17,7 @@ import Property from './pages/Property';
 import Appliances from './pages/Appliances';
 import ApplianceDetail from './pages/ApplianceDetail';
 import Warranties from './pages/Warranties';
+import Household from './pages/Household';
 import Notifications from './pages/Notifications';
 import NotificationPreferences from './pages/NotificationPreferences';
 import Settings from './pages/Settings';
@@ -31,7 +32,6 @@ function AppRoutes() {
   const { user, loading, hasOnboarded } = useAuth();
   const location = useLocation();
 
-  // 1. Legal pages — always accessible, regardless of auth state
   if (
     location.pathname === '/privacy' ||
     location.pathname === '/terms'
@@ -47,7 +47,6 @@ function AppRoutes() {
     );
   }
 
-  // 2. Loading state
   if (loading) {
     return (
       <div className="auth-loading">
@@ -56,7 +55,6 @@ function AppRoutes() {
     );
   }
 
-  // 3. Not logged in → Welcome or Login only, everything else redirects
   if (!user) {
     if (location.pathname === '/welcome') {
       return (
@@ -77,7 +75,6 @@ function AppRoutes() {
     return <Navigate to="/welcome" replace />;
   }
 
-  // 4. Logged in but still on /welcome or /login → redirect into the app
   if (
     location.pathname === '/welcome' ||
     location.pathname === '/login'
@@ -85,7 +82,6 @@ function AppRoutes() {
     return <Navigate to="/" replace />;
   }
 
-  // 5. Logged in but haven't finished onboarding → show onboarding
   if (!hasOnboarded) {
     return (
       <>
@@ -95,7 +91,6 @@ function AppRoutes() {
     );
   }
 
-  // 6. Full app
   return (
     <>
       <Routes>
@@ -107,6 +102,7 @@ function AppRoutes() {
         <Route path="/appliances" element={<Appliances />} />
         <Route path="/appliance/:id" element={<ApplianceDetail />} />
         <Route path="/warranties" element={<Warranties />} />
+        <Route path="/household" element={<Household />} />
         <Route path="/notifications" element={<Notifications />} />
         <Route
           path="/notification-preferences"
