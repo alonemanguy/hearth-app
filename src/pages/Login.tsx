@@ -5,6 +5,7 @@ import Input from '../components/Input';
 import Button from '../components/Button';
 import { useAuth } from '../lib/auth';
 import { easings } from '../lib/motion';
+import { Icon } from '../lib/icons';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -57,9 +58,7 @@ export default function Login() {
       : await signIn(email, password);
     setSubmitting(false);
 
-    if (error) {
-      setAuthError(error);
-    }
+    if (error) setAuthError(error);
   };
 
   const toggleMode = () => {
@@ -88,7 +87,7 @@ export default function Login() {
               delay: reduce ? 0 : 0.05,
             }}
           >
-            🏠
+            <Icon name="home" size={44} strokeWidth={1.5} />
           </motion.div>
           <h1 className="auth-title">Hearth</h1>
           <p className="auth-subtitle">

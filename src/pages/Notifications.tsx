@@ -15,14 +15,9 @@ import {
   computeNotifications,
   getOrCreatePreferences,
 } from '../lib/notifications';
+import { Icon, SEVERITY_ICON_NAMES } from '../lib/icons';
 
-const SEVERITY_ICONS: Record<string, string> = {
-  error: '⚠️',
-  warning: '🔔',
-  info: 'ℹ️',
-};
-
-export function Notifications() {
+export default function Notifications() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const reduce = useReducedMotion();
@@ -74,7 +69,7 @@ export function Notifications() {
       <Screen>
         <Header title="Notifications" onBack={() => navigate('/')} />
         <EmptyState
-          icon="✨"
+          icon="sparkles"
           title="All caught up"
           body="No tasks need your attention right now. We'll let you know when something's due."
         />
@@ -108,13 +103,13 @@ export function Notifications() {
               onClick={() => navigate(n.linkTo)}
             >
               <div className="notification-item-icon">
-                {SEVERITY_ICONS[n.severity]}
+                <Icon name={SEVERITY_ICON_NAMES[n.severity]} size={18} />
               </div>
               <div className="notification-item-content">
                 <div className="notification-item-title">{n.title}</div>
                 <div className="notification-item-body">{n.body}</div>
               </div>
-              <span className="menu-chevron">›</span>
+              <Icon name="chevronRight" size={20} style={{ color: '#6B6B6B' }} />
             </Card>
           </motion.div>
         ))}
@@ -122,5 +117,3 @@ export function Notifications() {
     </Screen>
   );
 }
-
-export default Notifications;

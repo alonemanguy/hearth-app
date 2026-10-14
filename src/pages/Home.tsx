@@ -12,7 +12,8 @@ import OverdueBanner from '../components/OverdueBanner';
 import { supabase } from '../lib/supabase';
 import { useAuth, HelpLevel } from '../lib/auth';
 import { easings } from '../lib/motion';
-import { Appliance, CATEGORY_ICONS, Task } from '../lib/types';
+import { Appliance, Task } from '../lib/types';
+import { CATEGORY_ICON_NAMES, Icon, IconName } from '../lib/icons';
 import { computeNotifications, getOrCreatePreferences } from '../lib/notifications';
 
 type ViewState = 'loading' | 'error' | 'empty' | 'populated';
@@ -34,7 +35,10 @@ const EMPTY_COPY: Record<HelpLevel, { body: string; cta: string }> = {
 
 const listContainer = {
   hidden: { opacity: 0 },
-  show: { opacity: 1, transition: { staggerChildren: 0.07, delayChildren: 0.15 } },
+  show: {
+    opacity: 1,
+    transition: { staggerChildren: 0.07, delayChildren: 0.15 },
+  },
 };
 
 const listItem = {
@@ -79,6 +83,7 @@ function Odometer({ value }: { value: number }) {
 function ApplianceCard({ appliance }: { appliance: Appliance }) {
   const navigate = useNavigate();
   const reduce = useReducedMotion();
+  const categoryIconName: IconName = CATEGORY_ICON_NAMES[appliance.category];
   return (
     <motion.div
       className="card appliance-card"
@@ -87,13 +92,13 @@ function ApplianceCard({ appliance }: { appliance: Appliance }) {
       transition={{ type: 'spring', stiffness: 400, damping: 26 }}
       onClick={() => navigate(`/appliance/${appliance.id}`)}
     >
-      <div className="appliance-icon">{CATEGORY_ICONS[appliance.category]}</div>
+      <Icon name={categoryIconName} size={28} strokeWidth={1.8} />
       <div className="appliance-name">{appliance.name}</div>
     </motion.div>
   );
 }
 
-export function Home() {
+export default function Home() {
   const navigate = useNavigate();
   const { helpLevel, user } = useAuth();
   const [state, setState] = useState<ViewState>('loading');
@@ -114,7 +119,10 @@ export function Home() {
 
     const [tasksRes, appliancesRes, propertyRes, prefs] = await Promise.all([
       supabase.from('tasks').select('*').order('due_date', { ascending: true }),
-      supabase.from('appliances').select('*').order('created_at', { ascending: false }),
+      supabase
+        .from('appliances')
+        .select('*')
+        .order('created_at', { ascending: false }),
       supabase
         .from('properties')
         .select('nickname')
@@ -154,6 +162,15 @@ export function Home() {
   const userName = user?.email?.split('@')[0] ?? 'there';
   const greeting = `Good morning, ${userName}`;
 
+  const applianceById = Object.fromEntries(appliances.map((a) => [a.id, a]));
+
+  const taskIcon = (task: Task): IconName => {
+    if (task.appliance_id && applianceById[task.appliance_id]) {
+      return CATEGORY_ICON_NAMES[applianceById[task.appliance_id].category];
+    }
+    return 'wrench';
+  };
+
   return (
     <Screen>
       <Header
@@ -170,7 +187,7 @@ export function Home() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35, ease: easings.easeOutExpo }}
         >
-          <span className="home-context-icon">🏠</span>
+          <Icon name="home" size={14} strokeWidth={2.2} />
           <span className="home-context-name">{propertyName}</span>
         </motion.div>
       )}
@@ -208,7 +225,7 @@ export function Home() {
           transition={{ duration: 0.4, ease: easings.easeOutExpo }}
         >
           <EmptyState
-            icon="⚠️"
+            icon="alert"
             title="Couldn't load tasks"
             body="Check your connection and try again."
             ctaLabel="Retry"
@@ -225,7 +242,7 @@ export function Home() {
           transition={{ duration: 0.4, ease: easings.easeOutExpo }}
         >
           <EmptyState
-            icon="🏠"
+            icon="home"
             title="No tasks yet"
             body={emptyCopy.body}
             ctaLabel={emptyCopy.cta}
@@ -254,7 +271,7 @@ export function Home() {
                   <motion.div key={task.id} variants={listItem}>
                     <TaskRow
                       id={task.id}
-                      icon="🔧"
+                      icon={taskIcon(task)}
                       title={task.title}
                       subtitle={`Due ${new Date(task.due_date).toLocaleDateString(
                         'en-US',
@@ -281,7 +298,10 @@ export function Home() {
             <h2 className="section-title" style={{ marginBottom: 0 }}>
               My Appliances
             </h2>
-            <button className="section-action" onClick={() => navigate('/appliances')}>
+            <button
+              className="section-action"
+              onClick={() => navigate('/appliances')}
+            >
               See all
             </button>
           </div>
@@ -305,14 +325,16 @@ export function Home() {
             className="empty-appliance-cta"
             onClick={() => navigate('/appliance/new')}
           >
-            <div className="empty-appliance-icon">🔌</div>
+            <div className="empty-appliance-icon">
+              <Icon name="appliance" size={22} />
+            </div>
             <div className="empty-appliance-text">
               <div className="empty-appliance-title">Add your first appliance</div>
               <div className="empty-appliance-sub">
                 Track maintenance, warranties, and service history.
               </div>
             </div>
-            <span className="menu-chevron">›</span>
+            <Icon name="chevronRight" size={20} />
           </Card>
         </motion.div>
       )}
@@ -320,4 +342,4 @@ export function Home() {
   );
 }
 
-export default Home;
+export { Home };

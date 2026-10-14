@@ -2,9 +2,19 @@ export type HelpLevel = 'basic' | 'guided' | 'detailed';
 
 export type TaskStatus = 'due' | 'overdue' | 'done';
 
-export type HomeType = 'house' | 'apartment' | 'condo' | 'townhouse' | 'other';
+export type HomeType =
+  | 'house'
+  | 'apartment'
+  | 'condo'
+  | 'townhouse'
+  | 'other';
 
-export type ApplianceCategory = 'hvac' | 'plumbing' | 'electrical' | 'appliance' | 'other';
+export type ApplianceCategory =
+  | 'hvac'
+  | 'plumbing'
+  | 'electrical'
+  | 'appliance'
+  | 'other';
 
 export type Property = {
   id: string;
@@ -66,12 +76,4 @@ export const CATEGORY_LABELS: Record<ApplianceCategory, string> = {
   electrical: 'Electrical',
   appliance: 'Appliance',
   other: 'Other',
-};
-
-export const CATEGORY_ICONS: Record<ApplianceCategory, string> = {
-  hvac: '🌬️',
-  plumbing: '🚿',
-  electrical: '⚡',
-  appliance: '🔌',
-  other: '🔧',
 };

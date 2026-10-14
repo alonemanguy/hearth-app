@@ -10,6 +10,7 @@ import Skeleton from '../components/Skeleton';
 import Toast from '../components/Toast';
 import { supabase } from '../lib/supabase';
 import { easings } from '../lib/motion';
+import { Icon } from '../lib/icons';
 
 type Task = {
   id: string;
@@ -93,7 +94,7 @@ export default function Detail() {
       setLoading(false);
     };
 
-    fetchTask();
+    void fetchTask();
   }, [id, navigate]);
 
   const markAsDone = async () => {
@@ -119,7 +120,9 @@ export default function Detail() {
       nextDate = getNextDueDate(task.due_date, task.repeat);
 
       if (nextDate) {
-        const { data: { user } } = await supabase.auth.getUser();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
         const { error: insertError } = await supabase.from('tasks').insert({
           user_id: user?.id,
           title: task.title,
@@ -175,7 +178,11 @@ export default function Detail() {
         <motion.div
           initial={reduce ? false : { opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.18, duration: 0.35, ease: easings.easeOutExpo }}
+          transition={{
+            delay: 0.18,
+            duration: 0.35,
+            ease: easings.easeOutExpo,
+          }}
         >
           <StatusPill status={celebrating ? 'done' : task.status} />
         </motion.div>
@@ -220,7 +227,11 @@ export default function Detail() {
           className="section"
           initial={reduce ? false : { opacity: 0, y: 12 }}
           animate={{ opacity: celebrating ? 0.4 : 1, y: 0 }}
-          transition={{ delay: 0.35, duration: 0.45, ease: easings.easeOutExpo }}
+          transition={{
+            delay: 0.35,
+            duration: 0.45,
+            ease: easings.easeOutExpo,
+          }}
         >
           <h3 className="section-title">Notes</h3>
           <Card>
@@ -267,7 +278,14 @@ export default function Detail() {
               onClick={markAsDone}
               disabled={celebrating}
             >
-              {celebrating ? '✓ Done' : 'Mark as Done'}
+              {celebrating ? (
+                <>
+                  <Icon name="check" size={18} strokeWidth={3} />
+                  Done
+                </>
+              ) : (
+                'Mark as Done'
+              )}
             </button>
           </motion.div>
         </div>

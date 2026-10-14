@@ -1,6 +1,7 @@
 import { motion, useReducedMotion } from 'motion/react';
 import { ReactNode } from 'react';
 import { easings } from '../lib/motion';
+import { Icon } from '../lib/icons';
 
 type Props = { title: string; right?: ReactNode; onBack?: () => void };
 
@@ -10,19 +11,14 @@ export default function Header({ title, right, onBack }: Props) {
 
   return (
     <div className="header">
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: 1 }}>
         {onBack && (
           <button
+            className="header-back"
             onClick={onBack}
-            style={{
-              background: 'none',
-              border: 'none',
-              fontSize: 20,
-              cursor: 'pointer',
-              color: 'inherit',
-            }}
+            aria-label="Back"
           >
-            ←
+            <Icon name="back" size={20} />
           </button>
         )}
         <h1 className="header-title">
@@ -49,3 +45,5 @@ export default function Header({ title, right, onBack }: Props) {
     </div>
   );
 }
+
+export { Header };

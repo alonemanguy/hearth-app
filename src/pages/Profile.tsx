@@ -7,11 +7,20 @@ import Card from '../components/Card';
 import Button from '../components/Button';
 import HelpLevelPicker from '../components/HelpLevelPicker';
 import { useAuth, HelpLevel } from '../lib/auth';
+import { Icon, IconName } from '../lib/icons';
 
 const LABELS: Record<HelpLevel, string> = {
   basic: 'Just the basics',
   guided: 'Guide me',
   detailed: 'Everything',
+};
+
+type Row = {
+  icon: IconName;
+  label: string;
+  to?: string;
+  onClick?: () => void;
+  value?: string;
 };
 
 export default function Profile() {
@@ -31,6 +40,18 @@ export default function Profile() {
   };
 
   const emailInitial = user?.email?.[0]?.toUpperCase() ?? '?';
+
+  const rows: Row[] = [
+    { icon: 'home', label: 'My Home', to: '/property' },
+    { icon: 'appliance', label: 'My Appliances', to: '/appliances' },
+    { icon: 'bell', label: 'Notifications', to: '/notification-preferences' },
+    {
+      icon: 'settings',
+      label: 'Help level',
+      onClick: openSheet,
+      value: LABELS[helpLevel],
+    },
+  ];
 
   const sheetPortal =
     sheetOpen && typeof document !== 'undefined'
@@ -68,43 +89,23 @@ export default function Profile() {
       </div>
 
       <Card>
-        <div
-          className="menu-row"
-          onClick={() => navigate('/property')}
-          style={{ cursor: 'pointer' }}
-        >
-          <span className="menu-icon">🏠</span>
-          <span className="menu-label">My Home</span>
-          <span className="menu-chevron">›</span>
-        </div>
-        <div
-          className="menu-row"
-          onClick={() => navigate('/appliances')}
-          style={{ cursor: 'pointer' }}
-        >
-          <span className="menu-icon">🔌</span>
-          <span className="menu-label">My Appliances</span>
-          <span className="menu-chevron">›</span>
-        </div>
-        <div
-          className="menu-row"
-          onClick={() => navigate('/notification-preferences')}
-          style={{ cursor: 'pointer' }}
-        >
-          <span className="menu-icon">🔔</span>
-          <span className="menu-label">Notifications</span>
-          <span className="menu-chevron">›</span>
-        </div>
-        <div
-          className="menu-row"
-          onClick={openSheet}
-          style={{ cursor: 'pointer' }}
-        >
-          <span className="menu-icon">🎚️</span>
-          <span className="menu-label">Help level</span>
-          <span className="menu-value">{LABELS[helpLevel]}</span>
-          <span className="menu-chevron">›</span>
-        </div>
+        {rows.map((row) => (
+          <div
+            key={row.label}
+            className="menu-row"
+            onClick={row.onClick ?? (() => row.to && navigate(row.to))}
+            style={{ cursor: 'pointer' }}
+          >
+            <span className="menu-icon">
+              <Icon name={row.icon} size={18} />
+            </span>
+            <span className="menu-label">{row.label}</span>
+            {row.value && <span className="menu-value">{row.value}</span>}
+            <span className="menu-chevron">
+              <Icon name="chevronRight" size={20} />
+            </span>
+          </div>
+        ))}
       </Card>
 
       <div style={{ marginTop: 24 }}>
@@ -114,7 +115,9 @@ export default function Profile() {
             onClick={signOut}
             style={{ cursor: 'pointer' }}
           >
-            <span className="menu-icon">🚪</span>
+            <span className="menu-icon">
+              <Icon name="signOut" size={18} />
+            </span>
             <span className="menu-label">Sign out</span>
           </div>
         </Card>

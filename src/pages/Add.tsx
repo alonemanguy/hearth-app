@@ -21,7 +21,7 @@ export default function Add() {
   const [appliances, setAppliances] = useState<Appliance[]>([]);
 
   useEffect(() => {
-    fetchAppliances();
+    void fetchAppliances();
   }, []);
 
   const fetchAppliances = async () => {
@@ -35,7 +35,9 @@ export default function Add() {
   const handleSave = async () => {
     setSaving(true);
 
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) {
       setSaving(false);
       alert('Not signed in.');

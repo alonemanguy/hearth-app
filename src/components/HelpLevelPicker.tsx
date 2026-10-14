@@ -1,12 +1,13 @@
 import { motion, useReducedMotion } from 'motion/react';
 import { HelpLevel } from '../lib/auth';
 import { easings } from '../lib/motion';
+import { Icon, IconName } from '../lib/icons';
 
 type Option = {
   value: HelpLevel;
   title: string;
   body: string;
-  icon: string;
+  icon: IconName;
 };
 
 const OPTIONS: Option[] = [
@@ -14,19 +15,19 @@ const OPTIONS: Option[] = [
     value: 'basic',
     title: 'Just the basics',
     body: 'I know my home. Show me the essentials, skip the rest.',
-    icon: '⚡',
+    icon: 'add',
   },
   {
     value: 'guided',
     title: 'Guide me',
     body: 'Teach me as I go. Helpful tips, no overwhelm.',
-    icon: '🧭',
+    icon: 'compass',
   },
   {
     value: 'detailed',
     title: 'Everything',
     body: 'Show me the why. Full context for every task and reminder.',
-    icon: '📖',
+    icon: 'book',
   },
 ];
 
@@ -35,7 +36,7 @@ type Props = {
   onChange: (level: HelpLevel) => void;
 };
 
-export default function HelpLevelPicker({ value, onChange }: Props) {
+export function HelpLevelPicker({ value, onChange }: Props) {
   const reduce = useReducedMotion();
 
   return (
@@ -57,13 +58,20 @@ export default function HelpLevelPicker({ value, onChange }: Props) {
             }}
             whileTap={reduce ? undefined : { scale: 0.98 }}
           >
-            <div className="help-option-icon">{opt.icon}</div>
+            <div className="help-option-icon">
+              <Icon name={opt.icon} size={22} />
+            </div>
             <div className="help-option-text">
               <div className="help-option-title">{opt.title}</div>
               <div className="help-option-body">{opt.body}</div>
             </div>
             <div className={`help-radio ${active ? 'help-radio--active' : ''}`}>
-              {active && <motion.div layoutId="help-radio-dot" className="help-radio-dot" />}
+              {active && (
+                <motion.div
+                  layoutId="help-radio-dot"
+                  className="help-radio-dot"
+                />
+              )}
             </div>
           </motion.button>
         );
@@ -71,3 +79,5 @@ export default function HelpLevelPicker({ value, onChange }: Props) {
     </div>
   );
 }
+
+export default HelpLevelPicker;

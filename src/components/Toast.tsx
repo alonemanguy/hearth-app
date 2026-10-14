@@ -1,4 +1,7 @@
+import { motion, AnimatePresence } from 'motion/react';
 import { useEffect } from 'react';
+import { springs } from '../lib/motion';
+import { Icon } from '../lib/icons';
 
 type Props = {
   message: string;
@@ -9,17 +12,27 @@ type Props = {
 export function Toast({ message, visible, onHide }: Props) {
   useEffect(() => {
     if (!visible) return;
-
-    const timeout = window.setTimeout(onHide, 2500);
-    return () => window.clearTimeout(timeout);
-  }, [onHide, visible]);
-
-  if (!visible) return null;
+    const timer = setTimeout(onHide, 2500);
+    return () => clearTimeout(timer);
+  }, [visible, onHide]);
 
   return (
-    <div className="toast" role="status" aria-live="polite">
-      {message}
-    </div>
+    <AnimatePresence>
+      {visible && (
+        <motion.div
+          className="toast"
+          initial={{ opacity: 0, y: 40, scale: 0.85 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: 20, scale: 0.9 }}
+          transition={springs.gentle}
+        >
+          <span className="toast-icon">
+            <Icon name="check" size={12} strokeWidth={3} />
+          </span>
+          <span className="toast-message">{message}</span>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
 

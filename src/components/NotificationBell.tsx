@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { motion, useReducedMotion } from 'motion/react';
+import { Icon } from '../lib/icons';
 
 export function NotificationBell({ count }: { count: number }) {
   const navigate = useNavigate();
@@ -13,7 +14,7 @@ export function NotificationBell({ count }: { count: number }) {
       transition={{ type: 'spring', stiffness: 500, damping: 30 }}
       aria-label={`Notifications${count > 0 ? `, ${count} unread` : ''}`}
     >
-      <span className="notification-bell-icon">🔔</span>
+      <Icon name="bell" size={20} />
       {count > 0 && (
         <motion.span
           className="notification-badge"

@@ -4,13 +4,16 @@ import { motion, useReducedMotion } from 'motion/react';
 import Screen from '../components/Screen';
 import Header from '../components/Header';
 import Card from '../components/Card';
-import Button from '../components/Button';
 import Skeleton from '../components/Skeleton';
 import EmptyState from '../components/EmptyState';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
 import { easings } from '../lib/motion';
-import { Appliance, CATEGORY_ICONS, CATEGORY_LABELS } from '../lib/types';
+import {
+  Appliance,
+  CATEGORY_LABELS,
+} from '../lib/types';
+import { CATEGORY_ICONS, Icon } from '../lib/icons';
 
 export default function Appliances() {
   const navigate = useNavigate();
@@ -21,7 +24,7 @@ export default function Appliances() {
   const [appliances, setAppliances] = useState<Appliance[]>([]);
 
   useEffect(() => {
-    fetchAppliances();
+    void fetchAppliances();
   }, []);
 
   const fetchAppliances = async () => {
@@ -45,7 +48,9 @@ export default function Appliances() {
     if (!expires) return null;
     const now = new Date();
     const exp = new Date(expires);
-    const days = Math.ceil((exp.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    const days = Math.ceil(
+      (exp.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+    );
     if (days < 0) return { label: 'Expired', color: 'error' as const };
     if (days <= 30) return { label: `${days}d left`, color: 'due' as const };
     return { label: 'Under warranty', color: 'success' as const };
@@ -69,7 +74,7 @@ export default function Appliances() {
       <Screen>
         <Header title="Appliances" onBack={() => navigate('/profile')} />
         <EmptyState
-          icon="🔌"
+          icon="appliance"
           title="No appliances yet"
           body="Add your first appliance to track maintenance, warranties, and service history."
           ctaLabel="Add appliance"
@@ -90,7 +95,7 @@ export default function Appliances() {
             onClick={() => navigate('/appliance/new')}
             aria-label="Add appliance"
           >
-            +
+            <Icon name="add" size={20} strokeWidth={2.4} />
           </button>
         }
       />
@@ -102,6 +107,7 @@ export default function Appliances() {
       >
         {appliances.map((a, i) => {
           const w = warrantyStatus(a.warranty_expires_at);
+          const CategoryIcon = CATEGORY_ICONS[a.category];
           return (
             <motion.div
               key={a.id}
@@ -119,7 +125,7 @@ export default function Appliances() {
                 onClick={() => navigate(`/appliance/${a.id}`)}
               >
                 <div className="appliance-list-icon">
-                  {CATEGORY_ICONS[a.category]}
+                  <CategoryIcon size={22} strokeWidth={2} />
                 </div>
                 <div className="appliance-list-info">
                   <div className="appliance-list-name">{a.name}</div>
@@ -129,7 +135,9 @@ export default function Appliances() {
                   </div>
                 </div>
                 {w && (
-                  <span className={`appliance-warranty-pill appliance-warranty-pill--${w.color}`}>
+                  <span
+                    className={`appliance-warranty-pill appliance-warranty-pill--${w.color}`}
+                  >
                     {w.label}
                   </span>
                 )}

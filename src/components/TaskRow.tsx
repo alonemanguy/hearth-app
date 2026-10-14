@@ -2,16 +2,17 @@ import { motion, useReducedMotion } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
 import StatusPill from './StatusPill';
 import { springs } from '../lib/motion';
+import { Icon, IconName } from '../lib/icons';
 
 type Props = {
   id: string;
-  icon: string;
+  icon: IconName;
   title: string;
   subtitle: string;
   status: 'due' | 'overdue' | 'done';
 };
 
-export default function TaskRow({ id, icon, title, subtitle, status }: Props) {
+export function TaskRow({ id, icon, title, subtitle, status }: Props) {
   const navigate = useNavigate();
   const reduce = useReducedMotion();
 
@@ -24,7 +25,9 @@ export default function TaskRow({ id, icon, title, subtitle, status }: Props) {
       whileHover={reduce ? undefined : { x: 2 }}
       transition={springs.snappy}
     >
-      <div className="task-icon">{icon}</div>
+      <div className="task-icon">
+        <Icon name={icon} size={20} />
+      </div>
       <div className="task-info">
         <div className="task-title">{title}</div>
         <div className="task-subtitle">{subtitle}</div>
@@ -33,3 +36,5 @@ export default function TaskRow({ id, icon, title, subtitle, status }: Props) {
     </motion.div>
   );
 }
+
+export default TaskRow;

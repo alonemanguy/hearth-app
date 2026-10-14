@@ -13,9 +13,9 @@ import { easings } from '../lib/motion';
 import {
   Appliance,
   ApplianceCategory,
-  CATEGORY_ICONS,
   CATEGORY_LABELS,
 } from '../lib/types';
+import { CATEGORY_ICONS, Icon } from '../lib/icons';
 
 const CATEGORIES: ApplianceCategory[] = [
   'hvac',
@@ -51,7 +51,7 @@ export default function ApplianceDetail() {
 
   useEffect(() => {
     if (isNew) return;
-    fetchAppliance();
+    void fetchAppliance();
   }, [id]);
 
   const fetchAppliance = async () => {
@@ -115,7 +115,11 @@ export default function ApplianceDetail() {
         .select()
         .single();
     } else {
-      result = await supabase.from('appliances').insert(payload).select().single();
+      result = await supabase
+        .from('appliances')
+        .insert(payload)
+        .select()
+        .single();
     }
 
     setSaving(false);
@@ -135,7 +139,10 @@ export default function ApplianceDetail() {
     if (!appliance) return;
     if (!confirm(`Delete "${appliance.name}"? This cannot be undone.`)) return;
 
-    const { error } = await supabase.from('appliances').delete().eq('id', appliance.id);
+    const { error } = await supabase
+      .from('appliances')
+      .delete()
+      .eq('id', appliance.id);
     if (error) {
       console.error('Error deleting:', error);
       alert('Could not delete.');
@@ -186,23 +193,40 @@ export default function ApplianceDetail() {
           <div className="input-group">
             <label>Category</label>
             <div className="category-grid">
-              {CATEGORIES.map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  className={`category-chip ${category === c ? 'category-chip--active' : ''}`}
-                  onClick={() => setCategory(c)}
-                >
-                  <span className="category-chip-icon">{CATEGORY_ICONS[c]}</span>
-                  <span className="category-chip-label">{CATEGORY_LABELS[c]}</span>
-                </button>
-              ))}
+              {CATEGORIES.map((c) => {
+                const CategoryIcon = CATEGORY_ICONS[c];
+                return (
+                  <button
+                    key={c}
+                    type="button"
+                    className={`category-chip ${
+                      category === c ? 'category-chip--active' : ''
+                    }`}
+                    onClick={() => setCategory(c)}
+                  >
+                    <CategoryIcon size={22} strokeWidth={1.8} />
+                    <span className="category-chip-label">
+                      {CATEGORY_LABELS[c]}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
           <div className="input-row">
-            <Input label="Make" value={make} onChange={setMake} placeholder="Whirlpool" />
-            <Input label="Model" value={model} onChange={setModel} placeholder="WRX735" />
+            <Input
+              label="Make"
+              value={make}
+              onChange={setMake}
+              placeholder="Whirlpool"
+            />
+            <Input
+              label="Model"
+              value={model}
+              onChange={setModel}
+              placeholder="WRX735"
+            />
           </div>
 
           <Input
@@ -273,6 +297,8 @@ export default function ApplianceDetail() {
 
   if (!appliance) return null;
 
+  const CategoryIcon = CATEGORY_ICONS[appliance.category];
+
   return (
     <Screen>
       <Header title="Appliance" onBack={() => navigate('/appliances')} />
@@ -283,9 +309,13 @@ export default function ApplianceDetail() {
         transition={{ duration: 0.45, ease: easings.easeOutExpo }}
       >
         <div className="property-hero">
-          <div className="property-hero-icon">{CATEGORY_ICONS[appliance.category]}</div>
+          <div className="property-hero-icon">
+            <CategoryIcon size={36} strokeWidth={1.6} />
+          </div>
           <h2 className="property-hero-title">{appliance.name}</h2>
-          <p className="property-hero-subtitle">{CATEGORY_LABELS[appliance.category]}</p>
+          <p className="property-hero-subtitle">
+            {CATEGORY_LABELS[appliance.category]}
+          </p>
         </div>
 
         <Card className="detail-card">
@@ -335,18 +365,19 @@ export default function ApplianceDetail() {
             <div className="info-row">
               <span className="info-label">Warranty expires</span>
               <span className="info-value">
-                {new Date(appliance.warranty_expires_at).toLocaleDateString('en-US', {
-                  month: 'long',
-                  day: 'numeric',
-                  year: 'numeric',
-                })}
+                {new Date(appliance.warranty_expires_at).toLocaleDateString(
+                  'en-US',
+                  { month: 'long', day: 'numeric', year: 'numeric' }
+                )}
               </span>
             </div>
           )}
           {appliance.lifespan_years && (
             <div className="info-row">
               <span className="info-label">Lifespan</span>
-              <span className="info-value">{appliance.lifespan_years} years</span>
+              <span className="info-value">
+                {appliance.lifespan_years} years
+              </span>
             </div>
           )}
         </Card>
@@ -361,7 +392,10 @@ export default function ApplianceDetail() {
         )}
 
         <div className="action-buttons">
-          <Button onClick={() => setEditing(true)}>Edit Appliance</Button>
+          <Button onClick={() => setEditing(true)}>
+            <Icon name="edit" size={16} />
+            Edit Appliance
+          </Button>
         </div>
       </motion.div>
     </Screen>

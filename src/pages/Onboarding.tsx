@@ -5,6 +5,7 @@ import Button from '../components/Button';
 import HelpLevelPicker from '../components/HelpLevelPicker';
 import { useAuth, HelpLevel } from '../lib/auth';
 import { easings } from '../lib/motion';
+import { Icon } from '../lib/icons';
 
 export default function Onboarding() {
   const { completeOnboarding } = useAuth();
@@ -27,10 +28,18 @@ export default function Onboarding() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease: easings.easeOutExpo }}
         >
-          <div className="onboarding-logo">🏠</div>
+          <motion.div
+            className="onboarding-logo"
+            initial={reduce ? false : { scale: 0.7, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.55, ease: easings.easeOutExpo, delay: 0.05 }}
+          >
+            <Icon name="home" size={40} strokeWidth={1.5} />
+          </motion.div>
           <h1 className="onboarding-title">Welcome to Hearth</h1>
           <p className="onboarding-subtitle">
-            One quick question so we can shape the app around how you like to work.
+            One quick question so we can shape the app around how you like to
+            work.
           </p>
         </motion.div>
 

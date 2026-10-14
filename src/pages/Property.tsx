@@ -12,6 +12,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
 import { easings } from '../lib/motion';
 import { Property as PropertyType, HomeType } from '../lib/types';
+import { Icon } from '../lib/icons';
 
 const HOME_TYPES: { value: HomeType; label: string }[] = [
   { value: 'house', label: 'House' },
@@ -47,7 +48,7 @@ export default function Property() {
   const [purchasePrice, setPurchasePrice] = useState('');
 
   useEffect(() => {
-    fetchProperty();
+    void fetchProperty();
   }, []);
 
   const fetchProperty = async () => {
@@ -124,7 +125,11 @@ export default function Property() {
         .select()
         .single();
     } else {
-      result = await supabase.from('properties').insert(payload).select().single();
+      result = await supabase
+        .from('properties')
+        .insert(payload)
+        .select()
+        .single();
     }
 
     setSaving(false);
@@ -188,12 +193,27 @@ export default function Property() {
 
           <div className="input-row">
             <Input label="City" value={city} onChange={setCity} placeholder="City" />
-            <Input label="State" value={stateField} onChange={setStateField} placeholder="State" />
+            <Input
+              label="State"
+              value={stateField}
+              onChange={setStateField}
+              placeholder="State"
+            />
           </div>
 
           <div className="input-row">
-            <Input label="Country" value={country} onChange={setCountry} placeholder="Country" />
-            <Input label="Postal code" value={postalCode} onChange={setPostalCode} placeholder="000000" />
+            <Input
+              label="Country"
+              value={country}
+              onChange={setCountry}
+              placeholder="Country"
+            />
+            <Input
+              label="Postal code"
+              value={postalCode}
+              onChange={setPostalCode}
+              placeholder="000000"
+            />
           </div>
 
           <div className="input-group">
@@ -203,7 +223,9 @@ export default function Property() {
                 <button
                   key={t.value}
                   type="button"
-                  className={`segment ${homeType === t.value ? 'segment--active' : ''}`}
+                  className={`segment ${
+                    homeType === t.value ? 'segment--active' : ''
+                  }`}
                   onClick={() => setHomeType(t.value)}
                 >
                   {t.label}
@@ -213,13 +235,33 @@ export default function Property() {
           </div>
 
           <div className="input-row">
-            <Input label="Year built" value={yearBuilt} onChange={setYearBuilt} placeholder="1998" />
-            <Input label="Square feet" value={squareFeet} onChange={setSquareFeet} placeholder="1800" />
+            <Input
+              label="Year built"
+              value={yearBuilt}
+              onChange={setYearBuilt}
+              placeholder="1998"
+            />
+            <Input
+              label="Square feet"
+              value={squareFeet}
+              onChange={setSquareFeet}
+              placeholder="1800"
+            />
           </div>
 
           <div className="input-row">
-            <Input label="Bedrooms" value={bedrooms} onChange={setBedrooms} placeholder="3" />
-            <Input label="Bathrooms" value={bathrooms} onChange={setBathrooms} placeholder="2" />
+            <Input
+              label="Bedrooms"
+              value={bedrooms}
+              onChange={setBedrooms}
+              placeholder="3"
+            />
+            <Input
+              label="Bathrooms"
+              value={bathrooms}
+              onChange={setBathrooms}
+              placeholder="2"
+            />
           </div>
 
           <Input
@@ -263,7 +305,7 @@ export default function Property() {
       <Screen>
         <Header title="My Home" onBack={() => navigate('/profile')} />
         <EmptyState
-          icon="🏠"
+          icon="home"
           title="No home added yet"
           body="Add your home to start tracking appliances, warranties, and value."
           ctaLabel="Add your home"
@@ -273,7 +315,12 @@ export default function Property() {
     );
   }
 
-  const addressLine = [property.address, property.city, property.state, property.country]
+  const addressLine = [
+    property.address,
+    property.city,
+    property.state,
+    property.country,
+  ]
     .filter(Boolean)
     .join(', ');
 
@@ -287,9 +334,13 @@ export default function Property() {
         transition={{ duration: 0.45, ease: easings.easeOutExpo }}
       >
         <div className="property-hero">
-          <div className="property-hero-icon">🏠</div>
+          <div className="property-hero-icon">
+            <Icon name="home" size={36} strokeWidth={1.6} />
+          </div>
           <h2 className="property-hero-title">{property.nickname}</h2>
-          {addressLine && <p className="property-hero-subtitle">{addressLine}</p>}
+          {addressLine && (
+            <p className="property-hero-subtitle">{addressLine}</p>
+          )}
         </div>
 
         <Card className="detail-card">
@@ -308,7 +359,9 @@ export default function Property() {
           {property.square_feet && (
             <div className="info-row">
               <span className="info-label">Square feet</span>
-              <span className="info-value">{property.square_feet.toLocaleString()}</span>
+              <span className="info-value">
+                {property.square_feet.toLocaleString()}
+              </span>
             </div>
           )}
           {(property.bedrooms || property.bathrooms) && (
