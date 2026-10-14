@@ -61,7 +61,9 @@ export default function Profile() {
 
       <div className="profile-header">
         <div className="avatar">{emailInitial}</div>
-        <div className="profile-name">{user?.email?.split('@')[0] ?? 'User'}</div>
+        <div className="profile-name">
+          {user?.email?.split('@')[0] ?? 'User'}
+        </div>
         <div className="profile-email">{user?.email}</div>
       </div>
 
@@ -84,11 +86,6 @@ export default function Profile() {
           <span className="menu-label">My Appliances</span>
           <span className="menu-chevron">›</span>
         </div>
-        <div className="menu-row">
-          <span className="menu-icon">📄</span>
-          <span className="menu-label">Warranties</span>
-          <span className="menu-chevron">›</span>
-        </div>
         <div
           className="menu-row"
           onClick={() => navigate('/notification-preferences')}
@@ -98,20 +95,14 @@ export default function Profile() {
           <span className="menu-label">Notifications</span>
           <span className="menu-chevron">›</span>
         </div>
-        <div className="menu-row">
-          <span className="menu-icon">👥</span>
-          <span className="menu-label">Household Members</span>
-          <span className="menu-chevron">›</span>
-        </div>
-        <div className="menu-row" onClick={openSheet} style={{ cursor: 'pointer' }}>
+        <div
+          className="menu-row"
+          onClick={openSheet}
+          style={{ cursor: 'pointer' }}
+        >
           <span className="menu-icon">🎚️</span>
           <span className="menu-label">Help level</span>
           <span className="menu-value">{LABELS[helpLevel]}</span>
-          <span className="menu-chevron">›</span>
-        </div>
-        <div className="menu-row">
-          <span className="menu-icon">⚙️</span>
-          <span className="menu-label">Settings</span>
           <span className="menu-chevron">›</span>
         </div>
       </Card>

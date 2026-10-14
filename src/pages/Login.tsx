@@ -1,71 +1,167 @@
-import { useState } from "react"
-import Screen from "../components/Screen"
-import Input from "../components/Input"
-import Button from "../components/Button"
-import { useAuth } from "../lib/auth"
+import { useState, FormEvent } from 'react';
+import { motion, useReducedMotion } from 'motion/react';
+import Screen from '../components/Screen';
+import Input from '../components/Input';
+import Button from '../components/Button';
+import { useAuth } from '../lib/auth';
+import { easings } from '../lib/motion';
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function Login() {
-  const { signIn, signUp } = useAuth()
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [isSignUp, setIsSignUp] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
+  const { signIn, signUp } = useAuth();
+  const reduce = useReducedMotion();
 
-  const handleSubmit = async () => {
-    setError(null)
-    setLoading(true)
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
 
+  const validate = () => {
+    let ok = true;
+    if (!email) {
+      setEmailError('Email is required');
+      ok = false;
+    } else if (!EMAIL_RE.test(email)) {
+      setEmailError('Enter a valid email address');
+      ok = false;
+    } else {
+      setEmailError(null);
+    }
+
+    if (!password) {
+      setPasswordError('Password is required');
+      ok = false;
+    } else if (password.length < 6) {
+      setPasswordError('Password must be at least 6 characters');
+      ok = false;
+    } else {
+      setPasswordError(null);
+    }
+
+    return ok;
+  };
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setAuthError(null);
+
+    if (!validate()) return;
+
+    setSubmitting(true);
     const { error } = isSignUp
       ? await signUp(email, password)
-      : await signIn(email, password)
+      : await signIn(email, password);
+    setSubmitting(false);
 
-    setLoading(false)
-    if (error) setError(error)
-  }
+    if (error) {
+      setAuthError(error);
+    }
+  };
+
+  const toggleMode = () => {
+    setIsSignUp((v) => !v);
+    setAuthError(null);
+    setEmailError(null);
+    setPasswordError(null);
+  };
 
   return (
     <Screen>
-      <div className="auth-header">
-        <div className="auth-logo">🏠</div>
-        <h1 className="auth-title">Hearth</h1>
-        <p className="auth-subtitle">
-          {isSignUp ? "Create your account" : "Welcome back"}
-        </p>
-      </div>
+      <form onSubmit={handleSubmit} noValidate>
+        <motion.div
+          className="auth-header"
+          initial={reduce ? false : { opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.55, ease: easings.easeOutExpo }}
+        >
+          <motion.div
+            className="auth-logo"
+            initial={reduce ? false : { scale: 0.7, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{
+              duration: 0.6,
+              ease: easings.easeOutExpo,
+              delay: reduce ? 0 : 0.05,
+            }}
+          >
+            🏠
+          </motion.div>
+          <h1 className="auth-title">Hearth</h1>
+          <p className="auth-subtitle">
+            {isSignUp ? 'Create your account' : 'Welcome back'}
+          </p>
+        </motion.div>
 
-      <Input
-        label="Email"
-        type="email"
-        value={email}
-        onChange={setEmail}
-        placeholder="you@example.com"
-      />
-      <Input
-        label="Password"
-        type="password"
-        value={password}
-        onChange={setPassword}
-        placeholder="••••••••"
-      />
+        <motion.div
+          initial={reduce ? false : { opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{
+            duration: 0.5,
+            ease: easings.easeOutExpo,
+            delay: reduce ? 0 : 0.15,
+          }}
+        >
+          <Input
+            id="login-email"
+            label="Email"
+            type="email"
+            value={email}
+            onChange={setEmail}
+            placeholder="alex@example.com"
+            error={emailError}
+            autoComplete="email"
+            required
+          />
 
-      {error && <div className="auth-error">{error}</div>}
+          <Input
+            id="login-password"
+            label="Password"
+            type="password"
+            value={password}
+            onChange={setPassword}
+            placeholder={isSignUp ? 'At least 6 characters' : 'Your password'}
+            error={passwordError}
+            autoComplete={isSignUp ? 'new-password' : 'current-password'}
+            required
+          />
 
-      <Button onClick={handleSubmit} disabled={!email || !password || loading}>
-        {loading ? "Please wait..." : isSignUp ? "Create account" : "Sign in"}
-      </Button>
+          {authError && (
+            <motion.div
+              className="auth-error"
+              role="alert"
+              initial={reduce ? false : { opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              {authError}
+            </motion.div>
+          )}
 
-      <button
-        className="auth-toggle"
-        onClick={() => {
-          setIsSignUp(!isSignUp)
-          setError(null)
-        }}
-      >
-        {isSignUp
-          ? "Already have an account? Sign in"
-          : "Don't have an account? Sign up"}
-      </button>
+          <Button disabled={submitting}>
+            {submitting
+              ? isSignUp
+                ? 'Creating account...'
+                : 'Signing in...'
+              : isSignUp
+              ? 'Create account'
+              : 'Sign in'}
+          </Button>
+
+          <button
+            type="button"
+            className="auth-toggle"
+            onClick={toggleMode}
+          >
+            {isSignUp
+              ? 'Already have an account? Sign in'
+              : "Don't have an account? Sign up"}
+          </button>
+        </motion.div>
+      </form>
     </Screen>
-  )
+  );
 }
