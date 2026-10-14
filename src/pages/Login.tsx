@@ -140,7 +140,7 @@ export default function Login() {
             </motion.div>
           )}
 
-          <Button disabled={submitting}>
+          <Button type="submit" disabled={submitting}>
             {submitting
               ? isSignUp
                 ? 'Creating account...'
