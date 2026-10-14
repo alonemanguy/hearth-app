@@ -17,13 +17,12 @@ import Terms from './pages/Terms';
 import DeleteAccount from './pages/DeleteAccount';
 import TabBar from './components/TabBar';
 import CookieConsent from './components/CookieConsent';
-import { Icon } from './lib/icons';
+import Logo from './components/Logo';
 
 function AppRoutes() {
   const { user, loading, hasOnboarded } = useAuth();
   const location = useLocation();
 
-  // Public routes — accessible without auth or onboarding
   const isPublicLegal =
     location.pathname === '/privacy' || location.pathname === '/terms';
 
@@ -42,7 +41,7 @@ function AppRoutes() {
   if (loading) {
     return (
       <div className="auth-loading">
-        <Icon name="home" size={48} strokeWidth={1.5} />
+        <Logo size={56} animated />
       </div>
     );
   }
@@ -90,7 +89,7 @@ function AppRoutes() {
   );
 }
 
-export function App() {
+export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
@@ -100,4 +99,4 @@ export function App() {
   );
 }
 
-export default App;
+export { App };

@@ -3,9 +3,9 @@ import { motion, useReducedMotion } from 'motion/react';
 import Screen from '../components/Screen';
 import Button from '../components/Button';
 import HelpLevelPicker from '../components/HelpLevelPicker';
+import Logo from '../components/Logo';
 import { useAuth, HelpLevel } from '../lib/auth';
 import { easings } from '../lib/motion';
-import { Icon } from '../lib/icons';
 
 export default function Onboarding() {
   const { completeOnboarding } = useAuth();
@@ -32,7 +32,7 @@ export default function Onboarding() {
         >
           <motion.div
             className="onboarding-logo"
-            initial={reduce ? false : { scale: 0.7, opacity: 0 }}
+            initial={reduce ? false : { scale: 0.85, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{
               duration: 0.55,
@@ -40,7 +40,7 @@ export default function Onboarding() {
               delay: 0.05,
             }}
           >
-            <Icon name="home" size={40} strokeWidth={1.5} />
+            <Logo size={64} animated />
           </motion.div>
           <h1 className="onboarding-title">Welcome to Hearth</h1>
           <p className="onboarding-subtitle">

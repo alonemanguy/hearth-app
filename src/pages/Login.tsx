@@ -3,9 +3,9 @@ import { motion, useReducedMotion } from 'motion/react';
 import Screen from '../components/Screen';
 import Input from '../components/Input';
 import Button from '../components/Button';
+import Logo from '../components/Logo';
 import { useAuth } from '../lib/auth';
 import { easings } from '../lib/motion';
-import { Icon } from '../lib/icons';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -79,7 +79,7 @@ export default function Login() {
         >
           <motion.div
             className="auth-logo"
-            initial={reduce ? false : { scale: 0.7, opacity: 0 }}
+            initial={reduce ? false : { scale: 0.85, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{
               duration: 0.6,
@@ -87,7 +87,7 @@ export default function Login() {
               delay: reduce ? 0 : 0.05,
             }}
           >
-            <Icon name="home" size={44} strokeWidth={1.5} />
+            <Logo size={72} animated />
           </motion.div>
           <h1 className="auth-title">Hearth</h1>
           <p className="auth-subtitle">
@@ -101,7 +101,7 @@ export default function Login() {
           transition={{
             duration: 0.5,
             ease: easings.easeOutExpo,
-            delay: reduce ? 0 : 0.15,
+            delay: reduce ? 0 : 0.2,
           }}
         >
           <Input

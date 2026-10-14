@@ -10,7 +10,6 @@ import Skeleton from '../components/Skeleton';
 import Toast from '../components/Toast';
 import { supabase } from '../lib/supabase';
 import { easings } from '../lib/motion';
-import { Icon } from '../lib/icons';
 
 type Task = {
   id: string;
@@ -63,10 +62,40 @@ function formatDate(dateStr: string): string {
   });
 }
 
+function AnimatedCheck({ reduce }: { reduce: boolean }) {
+  if (reduce) {
+    return (
+      <svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+        <path
+          d="M 5 13 L 10 18 L 19 7"
+          stroke="white"
+          strokeWidth={3}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    );
+  }
+  return (
+    <svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+      <motion.path
+        d="M 5 13 L 10 18 L 19 7"
+        stroke="white"
+        strokeWidth={3}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        initial={{ pathLength: 0 }}
+        animate={{ pathLength: 1 }}
+        transition={{ duration: 0.4, ease: 'easeOut', delay: 0.05 }}
+      />
+    </svg>
+  );
+}
+
 export default function Detail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const reduce = useReducedMotion();
+  const reduce = useReducedMotion() ?? false;
 
   const [task, setTask] = useState<Task | null>(null);
   const [loading, setLoading] = useState(true);
@@ -280,7 +309,7 @@ export default function Detail() {
             >
               {celebrating ? (
                 <>
-                  <Icon name="check" size={18} strokeWidth={3} />
+                  <AnimatedCheck reduce={reduce} />
                   Done
                 </>
               ) : (

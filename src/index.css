@@ -54,6 +54,19 @@ svg { display: block; flex-shrink: 0; }
   flex-direction: column;
 }
 
+/* --- Wordmark --- */
+.wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.wordmark-text {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
 /* --- Header --- */
 .header {
   display: flex;
@@ -1284,15 +1297,10 @@ svg { display: block; flex-shrink: 0; }
   padding: var(--space-6) 0 var(--space-4);
 }
 .onboarding-logo {
-  width: 72px;
-  height: 72px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(31, 77, 58, 0.06);
-  border-radius: var(--radius-lg);
-  margin-bottom: var(--space-2);
-  color: var(--color-primary);
+  margin-bottom: var(--space-3);
 }
 .onboarding-title {
   font-size: 28px;
@@ -1411,19 +1419,17 @@ svg { display: block; flex-shrink: 0; }
   padding: var(--space-12) 0 var(--space-8);
 }
 .auth-logo {
-  width: 88px;
-  height: 88px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(31, 77, 58, 0.06);
-  border-radius: var(--radius-lg);
   color: var(--color-primary);
+  margin-bottom: var(--space-2);
 }
 .auth-title {
   font-size: 32px;
   font-weight: 700;
   color: var(--color-primary);
+  letter-spacing: -0.02em;
 }
 .auth-subtitle {
   font-size: 15px;
@@ -1456,5 +1462,4 @@ svg { display: block; flex-shrink: 0; }
   align-items: center;
   justify-content: center;
   color: var(--color-primary);
-  animation: skeleton-shimmer 1.6s ease-in-out infinite;
 }
