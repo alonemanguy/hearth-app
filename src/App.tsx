@@ -9,6 +9,7 @@ import Onboarding from './pages/Onboarding';
 import Property from './pages/Property';
 import Appliances from './pages/Appliances';
 import ApplianceDetail from './pages/ApplianceDetail';
+import Warranties from './pages/Warranties';
 import Notifications from './pages/Notifications';
 import NotificationPreferences from './pages/NotificationPreferences';
 import Settings from './pages/Settings';
@@ -74,6 +75,7 @@ function AppRoutes() {
         <Route path="/property" element={<Property />} />
         <Route path="/appliances" element={<Appliances />} />
         <Route path="/appliance/:id" element={<ApplianceDetail />} />
+        <Route path="/warranties" element={<Warranties />} />
         <Route path="/notifications" element={<Notifications />} />
         <Route
           path="/notification-preferences"
