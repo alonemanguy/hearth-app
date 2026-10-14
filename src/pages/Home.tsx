@@ -9,12 +9,17 @@ import Skeleton from '../components/Skeleton';
 import EmptyState from '../components/EmptyState';
 import NotificationBell from '../components/NotificationBell';
 import OverdueBanner from '../components/OverdueBanner';
+import ScoreRing, { scoreColor } from '../components/ScoreRing';
 import { supabase } from '../lib/supabase';
 import { useAuth, HelpLevel } from '../lib/auth';
 import { easings } from '../lib/motion';
-import { Appliance, Task } from '../lib/types';
+import { Appliance, Property, Task } from '../lib/types';
 import { CATEGORY_ICON_NAMES, Icon, IconName } from '../lib/icons';
-import { computeNotifications, getOrCreatePreferences } from '../lib/notifications';
+import {
+  computeNotifications,
+  getOrCreatePreferences,
+} from '../lib/notifications';
+import { computeHealthReport } from '../lib/health';
 
 type ViewState = 'loading' | 'error' | 'empty' | 'populated';
 
@@ -104,6 +109,7 @@ export default function Home() {
   const [state, setState] = useState<ViewState>('loading');
   const [tasks, setTasks] = useState<Task[]>([]);
   const [appliances, setAppliances] = useState<Appliance[]>([]);
+  const [property, setProperty] = useState<Property | null>(null);
   const [propertyName, setPropertyName] = useState<string | null>(null);
   const [notificationCount, setNotificationCount] = useState(0);
   const [overdueCount, setOverdueCount] = useState(0);
@@ -125,7 +131,7 @@ export default function Home() {
         .order('created_at', { ascending: false }),
       supabase
         .from('properties')
-        .select('nickname')
+        .select('*')
         .order('created_at', { ascending: true })
         .limit(1)
         .maybeSingle(),
@@ -140,14 +146,22 @@ export default function Home() {
 
     const tasksData = (tasksRes.data as Task[]) ?? [];
     const appliancesData = (appliancesRes.data as Appliance[]) ?? [];
+    const propertyData = (propertyRes.data as Property) ?? null;
 
     setTasks(tasksData);
     setAppliances(appliancesData);
-    setPropertyName(propertyRes.data?.nickname ?? null);
+    setProperty(propertyData);
+    setPropertyName(propertyData?.nickname ?? null);
 
-    const notifications = computeNotifications(tasksData, appliancesData, prefs);
+    const notifications = computeNotifications(
+      tasksData,
+      appliancesData,
+      prefs
+    );
     setNotificationCount(notifications.length);
-    setOverdueCount(notifications.filter((n) => n.severity === 'error').length);
+    setOverdueCount(
+      notifications.filter((n) => n.severity === 'error').length
+    );
 
     if (tasksData.length === 0) {
       setState('empty');
@@ -171,6 +185,9 @@ export default function Home() {
     return 'wrench';
   };
 
+  const health = computeHealthReport(property, appliances, tasks);
+  const healthColor = scoreColor(health.total);
+
   return (
     <Screen>
       <Header
@@ -192,6 +209,43 @@ export default function Home() {
         </motion.div>
       )}
 
+      {/* Home Health Score preview */}
+      <motion.div
+        initial={reduceAnim()}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{
+          duration: 0.45,
+          ease: easings.easeOutExpo,
+          delay: 0.05,
+        }}
+      >
+        <Card
+          className="health-preview"
+          onClick={() => navigate('/health')}
+          style={{ borderLeft: `3px solid ${healthColor}` }}
+        >
+          <ScoreRing
+            score={health.total}
+            size={56}
+            strokeWidth={6}
+            showNumber={false}
+          />
+          <div className="health-preview-body">
+            <div className="health-preview-eyebrow">HOME HEALTH</div>
+            <div
+              className="health-preview-title"
+              style={{ color: healthColor }}
+            >
+              {health.categoryLabel}
+            </div>
+            <div className="health-preview-sub">
+              {health.total} / 100
+            </div>
+          </div>
+          <Icon name="chevronRight" size={20} />
+        </Card>
+      </motion.div>
+
       {state === 'loading' && (
         <motion.div
           key="loading"
@@ -199,7 +253,7 @@ export default function Home() {
           animate={{ opacity: 1 }}
           transition={{ duration: 0.35, ease: easings.easeOutExpo }}
         >
-          <Card className="summary-card">
+          <Card className="summary-card" style={{ marginTop: 16 }}>
             <Skeleton width="60px" height="48px" radius="8px" />
             <div style={{ height: 8 }} />
             <Skeleton width="140px" height="16px" radius="8px" />
@@ -266,7 +320,11 @@ export default function Home() {
           <div className="section">
             <h2 className="section-title">Upcoming Tasks</h2>
             <Card>
-              <motion.div variants={listContainer} initial="hidden" animate="show">
+              <motion.div
+                variants={listContainer}
+                initial="hidden"
+                animate="show"
+              >
                 {tasks.map((task) => (
                   <motion.div key={task.id} variants={listItem}>
                     <TaskRow
@@ -329,7 +387,9 @@ export default function Home() {
               <Icon name="appliance" size={22} />
             </div>
             <div className="empty-appliance-text">
-              <div className="empty-appliance-title">Add your first appliance</div>
+              <div className="empty-appliance-title">
+                Add your first appliance
+              </div>
               <div className="empty-appliance-sub">
                 Track maintenance, warranties, and service history.
               </div>
@@ -342,4 +402,6 @@ export default function Home() {
   );
 }
 
-export { Home };
+function reduceAnim() {
+  return false;
+}

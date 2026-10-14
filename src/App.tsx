@@ -1,10 +1,17 @@
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+  useLocation,
+} from 'react-router-dom';
 import { AuthProvider, useAuth } from './lib/auth';
 import Home from './pages/Home';
 import Add from './pages/Add';
 import Detail from './pages/Detail';
 import Profile from './pages/Profile';
 import Login from './pages/Login';
+import Welcome from './pages/Welcome';
 import Onboarding from './pages/Onboarding';
 import Property from './pages/Property';
 import Appliances from './pages/Appliances';
@@ -24,10 +31,11 @@ function AppRoutes() {
   const { user, loading, hasOnboarded } = useAuth();
   const location = useLocation();
 
-  const isPublicLegal =
-    location.pathname === '/privacy' || location.pathname === '/terms';
-
-  if (isPublicLegal) {
+  // 1. Legal pages — always accessible, regardless of auth state
+  if (
+    location.pathname === '/privacy' ||
+    location.pathname === '/terms'
+  ) {
     return (
       <>
         <Routes>
@@ -39,6 +47,7 @@ function AppRoutes() {
     );
   }
 
+  // 2. Loading state
   if (loading) {
     return (
       <div className="auth-loading">
@@ -47,15 +56,36 @@ function AppRoutes() {
     );
   }
 
+  // 3. Not logged in → Welcome or Login only, everything else redirects
   if (!user) {
-    return (
-      <>
-        <Login />
-        <CookieConsent />
-      </>
-    );
+    if (location.pathname === '/welcome') {
+      return (
+        <>
+          <Welcome />
+          <CookieConsent />
+        </>
+      );
+    }
+    if (location.pathname === '/login') {
+      return (
+        <>
+          <Login />
+          <CookieConsent />
+        </>
+      );
+    }
+    return <Navigate to="/welcome" replace />;
   }
 
+  // 4. Logged in but still on /welcome or /login → redirect into the app
+  if (
+    location.pathname === '/welcome' ||
+    location.pathname === '/login'
+  ) {
+    return <Navigate to="/" replace />;
+  }
+
+  // 5. Logged in but haven't finished onboarding → show onboarding
   if (!hasOnboarded) {
     return (
       <>
@@ -65,6 +95,7 @@ function AppRoutes() {
     );
   }
 
+  // 6. Full app
   return (
     <>
       <Routes>
