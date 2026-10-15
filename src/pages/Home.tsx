@@ -7,19 +7,21 @@ import Card from '../components/Card';
 import TaskRow from '../components/TaskRow';
 import Skeleton from '../components/Skeleton';
 import EmptyState from '../components/EmptyState';
+import Toast from '../components/Toast';
 import NotificationBell from '../components/NotificationBell';
 import OverdueBanner from '../components/OverdueBanner';
 import ScoreRing, { scoreColor } from '../components/ScoreRing';
 import { supabase } from '../lib/supabase';
 import { useAuth, HelpLevel } from '../lib/auth';
 import { easings } from '../lib/motion';
-import { Appliance, Property, Task } from '../lib/types';
+import { Appliance, Property, Task, CATEGORY_LABELS } from '../lib/types';
 import { CATEGORY_ICON_NAMES, Icon, IconName } from '../lib/icons';
 import {
   computeNotifications,
   getOrCreatePreferences,
 } from '../lib/notifications';
 import { computeHealthReport } from '../lib/health';
+import { Suggestion, getSuggestionsForCategory } from '../lib/suggestions';
 
 type ViewState = 'loading' | 'error' | 'empty' | 'populated';
 
@@ -55,6 +57,12 @@ const listItem = {
   },
 };
 
+function addDays(dateStr: string, days: number): string {
+  const d = new Date(dateStr + 'T00:00:00');
+  d.setDate(d.getDate() + days);
+  return d.toISOString().split('T')[0];
+}
+
 function Odometer({ value }: { value: number }) {
   const [display, setDisplay] = useState(0);
   const reduce = useReducedMotion();
@@ -85,10 +93,23 @@ function Odometer({ value }: { value: number }) {
   );
 }
 
+function getWarrantyStatus(expiresAt: string | null) {
+  if (!expiresAt) return null;
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  const exp = new Date(expiresAt);
+  const days = Math.ceil((exp.getTime() - now.getTime()) / 86400000);
+  if (days < 0) return { label: 'Warranty expired', tone: 'error' as const };
+  if (days <= 30) return { label: `${days}d warranty`, tone: 'warning' as const };
+  return { label: 'Under warranty', tone: 'success' as const };
+}
+
 function ApplianceCard({ appliance }: { appliance: Appliance }) {
   const navigate = useNavigate();
   const reduce = useReducedMotion();
   const categoryIconName: IconName = CATEGORY_ICON_NAMES[appliance.category];
+  const warranty = getWarrantyStatus(appliance.warranty_expires_at);
+
   return (
     <motion.div
       className="card appliance-card"
@@ -99,6 +120,14 @@ function ApplianceCard({ appliance }: { appliance: Appliance }) {
     >
       <Icon name={categoryIconName} size={28} strokeWidth={1.8} />
       <div className="appliance-name">{appliance.name}</div>
+      <div className="appliance-cat">{CATEGORY_LABELS[appliance.category]}</div>
+      {warranty && (
+        <span
+          className={`appliance-mini-pill appliance-mini-pill--${warranty.tone}`}
+        >
+          {warranty.label}
+        </span>
+      )}
     </motion.div>
   );
 }
@@ -114,6 +143,9 @@ export default function Home() {
   const [propertyName, setPropertyName] = useState<string | null>(null);
   const [notificationCount, setNotificationCount] = useState(0);
   const [overdueCount, setOverdueCount] = useState(0);
+  const [addingSuggestion, setAddingSuggestion] = useState<string | null>(null);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastVisible, setToastVisible] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -172,10 +204,47 @@ export default function Home() {
     setTimeout(() => setState('populated'), 180);
   };
 
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setToastVisible(true);
+  };
+
+  const handleAddSuggestion = async (
+    suggestion: Suggestion,
+    appliance: Appliance
+  ) => {
+    if (!user) return;
+    if (addingSuggestion) return;
+    setAddingSuggestion(suggestion.id);
+
+    const today = new Date().toISOString().split('T')[0];
+    const dueDate = addDays(today, suggestion.dueInDays);
+
+    const { error } = await supabase.from('tasks').insert({
+      user_id: user.id,
+      title: suggestion.title,
+      appliance_id: appliance.id,
+      appliance: appliance.name,
+      due_date: dueDate,
+      repeat: suggestion.repeat,
+      status: 'due',
+    });
+
+    setAddingSuggestion(null);
+
+    if (error) {
+      console.error('Error adding suggestion:', error);
+      showToast('Could not add task');
+      return;
+    }
+
+    showToast('Task added');
+    await fetchAll();
+  };
+
   const activeCount = tasks.filter((t) => t.status !== 'done').length;
   const emptyCopy = EMPTY_COPY[helpLevel];
 
-  // Greeting: display name first, then "there" fallback. Never the email username.
   const greetingName = displayName?.trim() || 'there';
   const greeting = `Good morning, ${greetingName}`;
 
@@ -191,10 +260,24 @@ export default function Home() {
   const health = computeHealthReport(property, appliances, tasks);
   const healthColor = scoreColor(health.total);
 
-  // Only show the numeric health score once the user has enough data.
-  // Otherwise show a soft "getting started" card.
   const dataPoints = appliances.length + tasks.length;
   const showHealthScore = dataPoints >= 3;
+
+  // Suggestions when no tasks but has appliances
+  const showSuggestions = state === 'empty' && appliances.length > 0;
+  const suggestions: { suggestion: Suggestion; appliance: Appliance }[] = [];
+  if (showSuggestions) {
+    const seenTitles = new Set<string>();
+    for (const appliance of appliances.slice(0, 3)) {
+      const categorySuggestions = getSuggestionsForCategory(appliance.category);
+      for (const s of categorySuggestions) {
+        if (!seenTitles.has(s.title)) {
+          seenTitles.add(s.title);
+          suggestions.push({ suggestion: s, appliance });
+        }
+      }
+    }
+  }
 
   return (
     <Screen>
@@ -217,7 +300,6 @@ export default function Home() {
         </motion.div>
       )}
 
-      {/* Home Health — full score when there's enough data */}
       {showHealthScore && (
         <motion.div
           initial={reduce ? false : { opacity: 0, y: 8 }}
@@ -254,7 +336,6 @@ export default function Home() {
         </motion.div>
       )}
 
-      {/* Home Health — soft "getting started" state */}
       {!showHealthScore && (
         <motion.div
           initial={reduce ? false : { opacity: 0, y: 8 }}
@@ -265,10 +346,7 @@ export default function Home() {
             delay: reduce ? 0 : 0.05,
           }}
         >
-          <Card
-            className="health-starting"
-            onClick={() => navigate('/health')}
-          >
+          <Card className="health-starting" onClick={() => navigate('/health')}>
             <div className="health-starting-icon">
               <Icon name="sparkles" size={22} />
             </div>
@@ -326,7 +404,7 @@ export default function Home() {
         </motion.div>
       )}
 
-      {state === 'empty' && (
+      {state === 'empty' && !showSuggestions && (
         <motion.div
           key="empty"
           initial={{ opacity: 0, y: 12 }}
@@ -340,6 +418,72 @@ export default function Home() {
             ctaLabel={emptyCopy.cta}
             onCta={() => navigate('/add')}
           />
+        </motion.div>
+      )}
+
+      {state === 'empty' && showSuggestions && (
+        <motion.div
+          key="suggestions"
+          initial={reduce ? false : { opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, ease: easings.easeOutExpo }}
+        >
+          <div className="section">
+            <h2 className="section-title">Start with these</h2>
+            <p className="section-sub">
+              Common tasks for the appliances you added. Tap to add.
+            </p>
+            <div className="suggestions-list">
+              {suggestions.map((item, i) => (
+                <motion.div
+                  key={`${item.appliance.id}-${item.suggestion.id}`}
+                  initial={reduce ? false : { opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{
+                    duration: 0.4,
+                    ease: easings.easeOutExpo,
+                    delay: reduce ? 0 : i * 0.06,
+                  }}
+                >
+                  <Card
+                    className="suggestion-card"
+                    onClick={() =>
+                      handleAddSuggestion(item.suggestion, item.appliance)
+                    }
+                    style={{
+                      opacity:
+                        addingSuggestion === item.suggestion.id ? 0.5 : 1,
+                      pointerEvents: addingSuggestion ? 'none' : 'auto',
+                    }}
+                  >
+                    <div className="suggestion-icon">
+                      <Icon name={item.suggestion.icon} size={20} />
+                    </div>
+                    <div className="suggestion-info">
+                      <div className="suggestion-title">
+                        {item.suggestion.title}
+                      </div>
+                      <div className="suggestion-reason">
+                        {item.suggestion.reason}
+                      </div>
+                    </div>
+                    <div className="suggestion-add">
+                      <Icon name="add" size={16} strokeWidth={2.4} />
+                    </div>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+
+          <div className="section">
+            <button
+              className="section-action"
+              onClick={() => navigate('/add')}
+            >
+              Or add your own task →
+            </button>
+          </div>
         </motion.div>
       )}
 
@@ -436,6 +580,12 @@ export default function Home() {
           </Card>
         </motion.div>
       )}
+
+      <Toast
+        message={toastMessage}
+        visible={toastVisible}
+        onHide={() => setToastVisible(false)}
+      />
     </Screen>
   );
 }

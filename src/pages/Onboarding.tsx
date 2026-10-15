@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, useReducedMotion } from 'motion/react';
+import { motion, useReducedMotion, AnimatePresence } from 'motion/react';
 import Screen from '../components/Screen';
 import Button from '../components/Button';
 import Input from '../components/Input';
@@ -9,6 +9,7 @@ import HelpLevelPicker from '../components/HelpLevelPicker';
 import { useAuth, HelpLevel } from '../lib/auth';
 import { supabase } from '../lib/supabase';
 import { easings } from '../lib/motion';
+import { Icon } from '../lib/icons';
 import { ApplianceCategory, CATEGORY_LABELS } from '../lib/types';
 import { CATEGORY_ICONS } from '../lib/icons';
 
@@ -23,7 +24,13 @@ const STEPS: Step[] = [
   'done',
 ];
 
-const PROGRESS_STEPS: Step[] = ['welcome', 'name', 'terms', 'home', 'appliance'];
+const PROGRESS_STEPS: Step[] = [
+  'welcome',
+  'name',
+  'terms',
+  'home',
+  'appliance',
+];
 
 const CATEGORIES: ApplianceCategory[] = [
   'hvac',
@@ -42,23 +49,27 @@ export default function Onboarding() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Step 1 — help level
+  // Step 1
   const [level, setLevel] = useState<HelpLevel>('guided');
 
-  // Step 2 — display name
+  // Step 2
   const [firstName, setFirstName] = useState('');
 
-  // Step 3 — terms
+  // Step 3
   const [ageConfirmed, setAgeConfirmed] = useState(false);
 
-  // Step 4 — home
+  // Step 4
   const [homeNickname, setHomeNickname] = useState('');
   const [homeYear, setHomeYear] = useState('');
 
-  // Step 5 — appliance
+  // Step 5
   const [applianceName, setApplianceName] = useState('');
   const [applianceCategory, setApplianceCategory] =
     useState<ApplianceCategory>('appliance');
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [applianceMake, setApplianceMake] = useState('');
+  const [applianceModel, setApplianceModel] = useState('');
+  const [warrantyExpiry, setWarrantyExpiry] = useState('');
 
   const stepIndex = STEPS.indexOf(step);
   const progressIndex = PROGRESS_STEPS.indexOf(step);
@@ -123,6 +134,9 @@ export default function Onboarding() {
       user_id: user.id,
       name: applianceName.trim(),
       category: applianceCategory,
+      make: applianceMake.trim() || null,
+      model: applianceModel.trim() || null,
+      warranty_expires_at: warrantyExpiry || null,
     });
     setBusy(false);
 
@@ -230,10 +244,7 @@ export default function Onboarding() {
       </div>
 
       <div className="wizard-actions">
-        <Button
-          onClick={goNext}
-          disabled={!firstName.trim()}
-        >
+        <Button onClick={goNext} disabled={!firstName.trim()}>
           Continue
         </Button>
         <button className="wizard-back" onClick={goBack}>
@@ -359,7 +370,7 @@ export default function Onboarding() {
       <div className="wizard-header">
         <h1 className="wizard-title">Add your first appliance</h1>
         <p className="wizard-subtitle">
-          Hearth tracks warranties and maintenance for each appliance you add.
+          Hearth tracks warranties and maintenance for each appliance.
         </p>
       </div>
 
@@ -394,6 +405,56 @@ export default function Onboarding() {
             })}
           </div>
         </div>
+
+        <button
+          type="button"
+          className="details-toggle"
+          onClick={() => setDetailsOpen((v) => !v)}
+        >
+          <span>{detailsOpen ? 'Hide details' : 'Add details (optional)'}</span>
+          <motion.span
+            animate={{ rotate: detailsOpen ? 180 : 0 }}
+            transition={{ duration: 0.25 }}
+            style={{ display: 'inline-flex' }}
+          >
+            <Icon name="chevronDown" size={16} />
+          </motion.span>
+        </button>
+
+        <AnimatePresence initial={false}>
+          {detailsOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3, ease: easings.easeOutExpo }}
+              style={{ overflow: 'hidden' }}
+            >
+              <div style={{ paddingTop: 16 }}>
+                <div className="input-row">
+                  <Input
+                    label="Make"
+                    value={applianceMake}
+                    onChange={setApplianceMake}
+                    placeholder="Whirlpool"
+                  />
+                  <Input
+                    label="Model"
+                    value={applianceModel}
+                    onChange={setApplianceModel}
+                    placeholder="WRX735"
+                  />
+                </div>
+                <Input
+                  label="Warranty expires"
+                  type="date"
+                  value={warrantyExpiry}
+                  onChange={setWarrantyExpiry}
+                />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       <div className="wizard-actions">
