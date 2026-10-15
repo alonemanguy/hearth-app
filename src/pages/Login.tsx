@@ -10,9 +10,9 @@ import { easings } from '../lib/motion';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export default function Login() {
-  const { signIn, signUp } = useAuth();
+export function Login() {
   const navigate = useNavigate();
+  const { signIn, signUp } = useAuth();
   const reduce = useReducedMotion();
 
   const [email, setEmail] = useState('');
@@ -130,6 +130,18 @@ export default function Login() {
             required
           />
 
+          {!isSignUp && (
+            <div style={{ textAlign: 'right', marginTop: -8, marginBottom: 16 }}>
+              <button
+                type="button"
+                className="auth-link"
+                onClick={() => navigate('/forgot-password')}
+              >
+                Forgot password?
+              </button>
+            </div>
+          )}
+
           {authError && (
             <motion.div
               className="auth-error"
@@ -161,18 +173,10 @@ export default function Login() {
               ? 'Already have an account? Sign in'
               : "Don't have an account? Sign up"}
           </button>
-
-          {!isSignUp && (
-            <button
-              type="button"
-              className="auth-toggle"
-              onClick={() => navigate('/forgot-password')}
-            >
-              Forgot your password?
-            </button>
-          )}
         </motion.div>
       </form>
     </Screen>
   );
 }
+
+export default Login;

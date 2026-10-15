@@ -1,119 +1,171 @@
-import { useEffect, useState, FormEvent } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, useReducedMotion } from 'motion/react';
 import Screen from '../components/Screen';
-import Header from '../components/Header';
 import Input from '../components/Input';
 import Button from '../components/Button';
+import Logo from '../components/Logo';
 import { supabase } from '../lib/supabase';
 import { easings } from '../lib/motion';
+import { Icon } from '../lib/icons';
+
+type Mode = 'loading' | 'form' | 'success' | 'invalid';
 
 export default function ResetPassword() {
   const navigate = useNavigate();
   const reduce = useReducedMotion();
 
-  const [checking, setChecking] = useState(true);
-  const [hasSession, setHasSession] = useState(false);
+  const [mode, setMode] = useState<Mode>('loading');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
-  const [passwordError, setPasswordError] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [done, setDone] = useState(false);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [confirmError, setConfirmError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Supabase client auto-detects the recovery token in the URL hash
-    // and emits PASSWORD_RECOVERY. We just check if a session exists.
-    const checkSession = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      setHasSession(Boolean(session));
-      setChecking(false);
+    let cancelled = false;
+
+    const check = async () => {
+      await new Promise((r) => setTimeout(r, 400));
+      if (cancelled) return;
+
+      const { data } = await supabase.auth.getSession();
+      if (data.session) {
+        setMode('form');
+      } else {
+        setMode('invalid');
+      }
     };
 
-    // Give Supabase a moment to process the URL hash
-    const timer = setTimeout(checkSession, 400);
-    return () => clearTimeout(timer);
+    void check();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event) => {
+        if (cancelled) return;
+        if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') {
+          setMode('form');
+        }
+      }
+    );
+
+    return () => {
+      cancelled = true;
+      subscription.unsubscribe();
+    };
   }, []);
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    setError(null);
+  const handleSubmit = async () => {
     setPasswordError(null);
+    setConfirmError(null);
+    setFormError(null);
 
-    if (!password || password.length < 6) {
+    let ok = true;
+    if (!password) {
+      setPasswordError('Password is required');
+      ok = false;
+    } else if (password.length < 6) {
       setPasswordError('Password must be at least 6 characters');
-      return;
+      ok = false;
     }
 
-    if (password !== confirm) {
-      setPasswordError('Passwords do not match');
-      return;
+    if (!confirm) {
+      setConfirmError('Confirm your password');
+      ok = false;
+    } else if (confirm !== password) {
+      setConfirmError('Passwords do not match');
+      ok = false;
     }
+
+    if (!ok) return;
 
     setSubmitting(true);
-    const { error: updateError } = await supabase.auth.updateUser({
-      password,
-    });
+    const { error } = await supabase.auth.updateUser({ password });
     setSubmitting(false);
 
-    if (updateError) {
-      setError(updateError.message);
+    if (error) {
+      setFormError(error.message);
       return;
     }
 
-    setDone(true);
-    setTimeout(() => navigate('/'), 1500);
+    setMode('success');
+    setTimeout(() => navigate('/', { replace: true }), 1800);
   };
 
-  if (checking) {
+  if (mode === 'loading') {
     return (
       <Screen>
-        <Header title="Set new password" onBack={() => navigate('/login')} />
-        <p className="auth-subtitle">Verifying your reset link...</p>
+        <div className="auth-loading">
+          <Logo size={56} animated />
+        </div>
       </Screen>
     );
   }
 
-  if (!hasSession) {
+  if (mode === 'invalid') {
     return (
       <Screen>
-        <Header title="Set new password" onBack={() => navigate('/login')} />
         <motion.div
+          className="auth-header"
           initial={reduce ? false : { opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease: easings.easeOutExpo }}
-          style={{ textAlign: 'center', paddingTop: 24 }}
         >
-          <h2 className="auth-title" style={{ marginBottom: 12 }}>
-            Link expired
-          </h2>
-          <p className="auth-subtitle" style={{ marginBottom: 24 }}>
-            This reset link is no longer valid. Request a new one.
+          <div className="auth-logo">
+            <Icon name="alert" size={44} strokeWidth={1.5} />
+          </div>
+          <h1 className="auth-title">Link expired</h1>
+          <p className="auth-subtitle">
+            This reset link is invalid or has already been used.
           </p>
-          <Button onClick={() => navigate('/forgot-password')}>
-            Request new link
-          </Button>
         </motion.div>
+        <div className="action-buttons" style={{ marginTop: 24 }}>
+          <Button onClick={() => navigate('/login', { replace: true })}>
+            Back to sign in
+          </Button>
+        </div>
       </Screen>
     );
   }
 
-  if (done) {
+  if (mode === 'success') {
     return (
       <Screen>
-        <Header title="Set new password" />
         <motion.div
+          className="auth-header"
           initial={reduce ? false : { opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease: easings.easeOutExpo }}
-          style={{ textAlign: 'center', paddingTop: 24 }}
         >
-          <h2 className="auth-title" style={{ marginBottom: 12 }}>
-            Password updated
-          </h2>
-          <p className="auth-subtitle">Taking you to your home...</p>
+          <motion.div
+            className="wizard-done-icon"
+            initial={reduce ? false : { scale: 0.7, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{
+              duration: 0.6,
+              ease: easings.easeOutExpo,
+              delay: 0.05,
+            }}
+          >
+            <svg width={44} height={44} viewBox="0 0 24 24" fill="none">
+              <motion.path
+                d="M 4 12.5 L 10 18 L 20 6"
+                stroke="#FFFFFF"
+                strokeWidth={2.5}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                initial={reduce ? false : { pathLength: 0 }}
+                animate={{ pathLength: 1 }}
+                transition={{
+                  duration: 0.55,
+                  ease: 'easeOut',
+                  delay: 0.35,
+                }}
+              />
+            </svg>
+          </motion.div>
+          <h1 className="auth-title">Password updated</h1>
+          <p className="auth-subtitle">Taking you home...</p>
         </motion.div>
       </Screen>
     );
@@ -121,20 +173,39 @@ export default function ResetPassword() {
 
   return (
     <Screen>
-      <Header title="Set new password" onBack={() => navigate('/login')} />
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          void handleSubmit();
+        }}
+        noValidate
+      >
+        <motion.div
+          className="auth-header"
+          initial={reduce ? false : { opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.55, ease: easings.easeOutExpo }}
+        >
+          <div className="auth-logo">
+            <Logo size={64} animated />
+          </div>
+          <h1 className="auth-title">Set a new password</h1>
+          <p className="auth-subtitle">
+            Choose something secure that you'll remember.
+          </p>
+        </motion.div>
 
-      <form onSubmit={handleSubmit} noValidate>
         <motion.div
           initial={reduce ? false : { opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: easings.easeOutExpo }}
+          transition={{
+            duration: 0.5,
+            ease: easings.easeOutExpo,
+            delay: reduce ? 0 : 0.15,
+          }}
         >
-          <p className="auth-subtitle" style={{ marginBottom: 20 }}>
-            Choose a new password for your Hearth account.
-          </p>
-
           <Input
-            id="new-password"
+            id="reset-password"
             label="New password"
             type="password"
             value={password}
@@ -146,19 +217,20 @@ export default function ResetPassword() {
           />
 
           <Input
-            id="confirm-password"
+            id="reset-confirm"
             label="Confirm password"
             type="password"
             value={confirm}
             onChange={setConfirm}
-            placeholder="Same password again"
+            placeholder="Type it again"
+            error={confirmError}
             autoComplete="new-password"
             required
           />
 
-          {error && (
+          {formError && (
             <div className="auth-error" role="alert">
-              {error}
+              {formError}
             </div>
           )}
 

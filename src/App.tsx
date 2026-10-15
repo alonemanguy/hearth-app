@@ -13,8 +13,6 @@ import Profile from './pages/Profile';
 import Login from './pages/Login';
 import Welcome from './pages/Welcome';
 import Onboarding from './pages/Onboarding';
-import ForgotPassword from './pages/ForgotPassword';
-import ResetPassword from './pages/ResetPassword';
 import Property from './pages/Property';
 import Appliances from './pages/Appliances';
 import ApplianceDetail from './pages/ApplianceDetail';
@@ -26,6 +24,8 @@ import Settings from './pages/Settings';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import Terms from './pages/Terms';
 import DeleteAccount from './pages/DeleteAccount';
+import ResetPassword from './pages/ResetPassword';
+import ForgotPassword from './pages/ForgotPassword';
 import TabBar from './components/TabBar';
 import CookieConsent from './components/CookieConsent';
 import Logo from './components/Logo';
@@ -34,21 +34,19 @@ function AppRoutes() {
   const { user, loading, hasOnboarded } = useAuth();
   const location = useLocation();
 
-  // Public routes — always available regardless of auth state
-  const alwaysPublic =
+  if (
     location.pathname === '/privacy' ||
     location.pathname === '/terms' ||
-    location.pathname === '/forgot-password' ||
-    location.pathname === '/reset-password';
-
-  if (alwaysPublic) {
+    location.pathname === '/reset-password' ||
+    location.pathname === '/forgot-password'
+  ) {
     return (
       <>
         <Routes>
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<Terms />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
         </Routes>
         <CookieConsent />
       </>
@@ -104,7 +102,6 @@ function AppRoutes() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/add" element={<Add />} />
-        <Route path="/edit/:id" element={<Add />} />
         <Route path="/detail/:id" element={<Detail />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/property" element={<Property />} />
