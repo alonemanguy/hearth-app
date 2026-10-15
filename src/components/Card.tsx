@@ -1,7 +1,16 @@
-type Props = { children: React.ReactNode; className?: string };
+import { HTMLAttributes, ReactNode } from 'react';
 
-export function Card({ children, className = '' }: Props) {
-  return <div className={`card ${className}`}>{children}</div>;
+type Props = {
+  children: ReactNode;
+  className?: string;
+} & HTMLAttributes<HTMLDivElement>;
+
+export function Card({ children, className = '', ...rest }: Props) {
+  return (
+    <div className={`card ${className}`} {...rest}>
+      {children}
+    </div>
+  );
 }
 
 export default Card;
