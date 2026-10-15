@@ -4,6 +4,7 @@ export type Household = {
   id: string;
   name: string;
   invite_code: string;
+  invite_code_expires_at: string | null;
   created_by: string | null;
   created_at: string;
 };
@@ -18,10 +19,16 @@ export type HouseholdMember = {
 function generateInviteCode(): string {
   const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
   let code = 'H-';
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < 8; i++) {
     code += chars[Math.floor(Math.random() * chars.length)];
   }
   return code;
+}
+
+function thirtyDaysFromNow(): string {
+  const d = new Date();
+  d.setDate(d.getDate() + 30);
+  return d.toISOString();
 }
 
 export async function getCurrentHousehold(): Promise<Household | null> {
@@ -101,7 +108,12 @@ export async function createHousehold(
     const code = generateInviteCode();
     const { data, error } = await supabase
       .from('households')
-      .insert({ name: name.trim(), invite_code: code, created_by: user.id })
+      .insert({
+        name: name.trim(),
+        invite_code: code,
+        created_by: user.id,
+        invite_code_expires_at: thirtyDaysFromNow(),
+      })
       .select()
       .single();
 
@@ -113,7 +125,10 @@ export async function createHousehold(
   }
 
   if (!inserted) {
-    return { household: null, error: lastError ?? 'Could not create household.' };
+    return {
+      household: null,
+      error: lastError ?? 'Could not create household.',
+    };
   }
 
   const { error: memberError } = await supabase
@@ -136,43 +151,25 @@ export async function createHousehold(
 export async function joinHousehold(
   code: string
 ): Promise<{ household: Household | null; error: string | null }> {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { household: null, error: 'Not signed in.' };
-
   const trimmed = code.trim().toUpperCase();
-  if (!trimmed) return { household: null, error: 'Enter an invite code.' };
-
-  const { data: results, error: lookupError } = await supabase.rpc(
-    'find_household_by_code',
-    { code: trimmed }
-  );
-
-  if (lookupError) {
-    console.error('Lookup failed:', lookupError);
-    return { household: null, error: 'Could not look up that code.' };
+  if (!trimmed) {
+    return { household: null, error: 'Enter an invite code.' };
   }
 
-  const household = (results && results[0]) as Household | undefined;
-  if (!household) {
-    return { household: null, error: 'Code not found. Check and try again.' };
+  const { data, error } = await supabase.rpc('attempt_join_household', {
+    code: trimmed,
+  });
+
+  if (error) {
+    console.error('Join RPC failed:', error);
+    return { household: null, error: 'Could not join household.' };
   }
 
-  const { error: joinError } = await supabase
-    .from('household_members')
-    .insert({
-      household_id: household.id,
-      user_id: user.id,
-      role: 'member',
-    });
-
-  if (joinError) {
-    if (joinError.message.toLowerCase().includes('duplicate')) {
-      return { household, error: null };
-    }
-    return { household: null, error: joinError.message };
+  if (!data || !data.ok) {
+    return { household: null, error: data?.error ?? 'Join failed.' };
   }
+
+  const household = data.household as Household;
 
   await attachSoloDataToHousehold(household.id);
 
@@ -195,4 +192,23 @@ export async function leaveHousehold(
 
   if (error) return { error: error.message };
   return { error: null };
+}
+
+export async function regenerateInviteCode(
+  householdId: string
+): Promise<{ code: string | null; error: string | null }> {
+  const { data, error } = await supabase.rpc('regenerate_invite_code', {
+    hid: householdId,
+  });
+
+  if (error) {
+    console.error('Regenerate failed:', error);
+    return { code: null, error: 'Could not regenerate code.' };
+  }
+
+  if (!data || !data.ok) {
+    return { code: null, error: data?.error ?? 'Failed.' };
+  }
+
+  return { code: data.invite_code, error: null };
 }
