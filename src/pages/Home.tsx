@@ -15,13 +15,17 @@ import { supabase } from '../lib/supabase';
 import { useAuth, HelpLevel } from '../lib/auth';
 import { easings } from '../lib/motion';
 import { Appliance, Property, Task, CATEGORY_LABELS } from '../lib/types';
-import { CATEGORY_ICON_NAMES, Icon, IconName } from '../lib/icons';
+import { CATEGORY_ICON_NAMES, CATEGORY_ICONS, Icon, IconName } from '../lib/icons';
 import {
   computeNotifications,
   getOrCreatePreferences,
 } from '../lib/notifications';
 import { computeHealthReport } from '../lib/health';
-import { Suggestion, getSuggestionsForCategory } from '../lib/suggestions';
+import {
+  Suggestion,
+  getSuggestionsForCategory,
+  getCommonApplianceSuggestions,
+} from '../lib/suggestions';
 
 type ViewState = 'loading' | 'error' | 'empty' | 'populated';
 
@@ -111,7 +115,6 @@ function getApplianceNextAction(
     (t) => t.appliance_id === appliance.id && t.status !== 'done'
   );
 
-  // Priority 1: overdue tasks
   const overdue = openTasks.find(
     (t) => new Date(t.due_date).getTime() < now.getTime()
   );
@@ -122,7 +125,6 @@ function getApplianceNextAction(
     return { label: `${days}d overdue`, tone: 'error' };
   }
 
-  // Priority 2: next task due soon
   const nextTask = openTasks[0];
   if (nextTask) {
     const days = Math.ceil(
@@ -143,7 +145,6 @@ function getApplianceNextAction(
     };
   }
 
-  // Priority 3: warranty
   if (appliance.warranty_expires_at) {
     const exp = new Date(appliance.warranty_expires_at);
     const days = Math.ceil((exp.getTime() - now.getTime()) / 86400000);
@@ -152,8 +153,16 @@ function getApplianceNextAction(
     return { label: 'Under warranty', tone: 'success' };
   }
 
-  // Priority 4: prompt
   return { label: 'Add warranty', tone: 'info' };
+}
+
+function getApplianceSubtitle(appliance: Appliance): string {
+  const make = appliance.make?.trim();
+  const model = appliance.model?.trim();
+  if (make && model) return `${make} · ${model}`;
+  if (make) return make;
+  if (model) return model;
+  return CATEGORY_LABELS[appliance.category];
 }
 
 function ApplianceCard({
@@ -167,6 +176,7 @@ function ApplianceCard({
   const reduce = useReducedMotion();
   const categoryIconName: IconName = CATEGORY_ICON_NAMES[appliance.category];
   const next = getApplianceNextAction(appliance, tasks);
+  const subtitle = getApplianceSubtitle(appliance);
 
   return (
     <motion.div
@@ -178,6 +188,7 @@ function ApplianceCard({
     >
       <Icon name={categoryIconName} size={28} strokeWidth={1.8} />
       <div className="appliance-name">{appliance.name}</div>
+      <div className="appliance-subtitle">{subtitle}</div>
       <div className={`appliance-next appliance-next--${next.tone}`}>
         {next.label}
       </div>
@@ -306,7 +317,8 @@ export default function Home() {
     await fetchAll();
   };
 
-  const activeCount = tasks.filter((t) => t.status !== 'done').length;
+  const openCount = tasks.filter((t) => t.status !== 'done').length;
+  const activeCount = openCount;
   const emptyCopy = EMPTY_COPY[helpLevel];
 
   const greetingName = displayName?.trim() || 'there';
@@ -327,24 +339,30 @@ export default function Home() {
   const dataPoints = appliances.length + tasks.length;
   const showHealthScore = dataPoints >= 3;
 
-  const showSuggestions = state === 'empty' && appliances.length > 0;
-  const suggestions: { suggestion: Suggestion; appliance: Appliance }[] = [];
-  if (showSuggestions) {
-    const seenTitles = new Set<string>();
+  const suggestionSeeds: { suggestion: Suggestion; appliance: Appliance }[] =
+    [];
+  if (appliances.length > 0 && openCount < 3) {
+    const seenTitles = new Set(tasks.map((t) => t.title.toLowerCase()));
     for (const appliance of appliances.slice(0, 3)) {
       const categorySuggestions = getSuggestionsForCategory(appliance.category);
       for (const s of categorySuggestions) {
-        if (!seenTitles.has(s.title)) {
-          seenTitles.add(s.title);
-          suggestions.push({ suggestion: s, appliance });
+        if (!seenTitles.has(s.title.toLowerCase())) {
+          seenTitles.add(s.title.toLowerCase());
+          suggestionSeeds.push({ suggestion: s, appliance });
         }
       }
     }
   }
+  const suggestions = suggestionSeeds.slice(0, 3);
 
-  // Show the welcome hint if user is fresh (< 2 data points) and hasn't dismissed
   const isFresh = dataPoints < 2;
   const showWelcomeCard = !welcomeDismissed && isFresh && state !== 'loading';
+
+  const commonAppliances = getCommonApplianceSuggestions(appliances);
+  const showApplianceSuggestions =
+    appliances.length > 0 &&
+    appliances.length < 3 &&
+    commonAppliances.length > 0;
 
   return (
     <Screen>
@@ -539,7 +557,7 @@ export default function Home() {
         </motion.div>
       )}
 
-      {state === 'empty' && !showSuggestions && !showWelcomeCard && (
+      {state === 'empty' && !showWelcomeCard && appliances.length === 0 && (
         <motion.div
           key="empty"
           initial={{ opacity: 0, y: 12 }}
@@ -553,72 +571,6 @@ export default function Home() {
             ctaLabel={emptyCopy.cta}
             onCta={() => navigate('/add')}
           />
-        </motion.div>
-      )}
-
-      {state === 'empty' && showSuggestions && !showWelcomeCard && (
-        <motion.div
-          key="suggestions"
-          initial={reduce ? false : { opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45, ease: easings.easeOutExpo }}
-        >
-          <div className="section">
-            <h2 className="section-title">Start with these</h2>
-            <p className="section-sub">
-              Common tasks for the appliances you added. Tap to add.
-            </p>
-            <div className="suggestions-list">
-              {suggestions.map((item, i) => (
-                <motion.div
-                  key={`${item.appliance.id}-${item.suggestion.id}`}
-                  initial={reduce ? false : { opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{
-                    duration: 0.4,
-                    ease: easings.easeOutExpo,
-                    delay: reduce ? 0 : i * 0.06,
-                  }}
-                >
-                  <Card
-                    className="suggestion-card"
-                    onClick={() =>
-                      handleAddSuggestion(item.suggestion, item.appliance)
-                    }
-                    style={{
-                      opacity:
-                        addingSuggestion === item.suggestion.id ? 0.5 : 1,
-                      pointerEvents: addingSuggestion ? 'none' : 'auto',
-                    }}
-                  >
-                    <div className="suggestion-icon">
-                      <Icon name={item.suggestion.icon} size={20} />
-                    </div>
-                    <div className="suggestion-info">
-                      <div className="suggestion-title">
-                        {item.suggestion.title}
-                      </div>
-                      <div className="suggestion-reason">
-                        {item.suggestion.reason}
-                      </div>
-                    </div>
-                    <div className="suggestion-add">
-                      <Icon name="add" size={16} strokeWidth={2.4} />
-                    </div>
-                  </Card>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-
-          <div className="section">
-            <button
-              className="section-action"
-              onClick={() => navigate('/add')}
-            >
-              Or add your own task →
-            </button>
-          </div>
         </motion.div>
       )}
 
@@ -662,6 +614,62 @@ export default function Home() {
         </motion.div>
       )}
 
+      {suggestions.length > 0 && !showWelcomeCard && (
+        <motion.div
+          className="section"
+          key="suggestions"
+          initial={reduce ? false : { opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, ease: easings.easeOutExpo }}
+        >
+          <h2 className="section-title">Suggested for you</h2>
+          <p className="section-sub">
+            Common tasks for the appliances you've added.
+          </p>
+          <div className="suggestions-list">
+            {suggestions.map((item, i) => (
+              <motion.div
+                key={`${item.appliance.id}-${item.suggestion.id}`}
+                initial={reduce ? false : { opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{
+                  duration: 0.4,
+                  ease: easings.easeOutExpo,
+                  delay: reduce ? 0 : i * 0.06,
+                }}
+              >
+                <Card
+                  className="suggestion-card"
+                  onClick={() =>
+                    handleAddSuggestion(item.suggestion, item.appliance)
+                  }
+                  style={{
+                    opacity:
+                      addingSuggestion === item.suggestion.id ? 0.5 : 1,
+                    pointerEvents: addingSuggestion ? 'none' : 'auto',
+                  }}
+                >
+                  <div className="suggestion-icon">
+                    <Icon name={item.suggestion.icon} size={20} />
+                  </div>
+                  <div className="suggestion-info">
+                    <div className="suggestion-title">
+                      {item.suggestion.title}
+                    </div>
+                    <div className="suggestion-reason">
+                      {item.suggestion.reason}
+                    </div>
+                  </div>
+                  <div className="suggestion-add">
+                    <Icon name="add" size={16} strokeWidth={2.4} />
+                  </div>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+      )}
+
       {appliances.length > 0 && (
         <motion.div
           className="section"
@@ -688,31 +696,34 @@ export default function Home() {
         </motion.div>
       )}
 
-      {appliances.length === 0 && state === 'populated' && (
+      {showApplianceSuggestions && (
         <motion.div
           className="section"
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: easings.easeOutExpo, delay: 0.2 }}
+          transition={{ duration: 0.5, ease: easings.easeOutExpo, delay: 0.3 }}
         >
-          <h2 className="section-title">My Appliances</h2>
-          <Card
-            className="empty-appliance-cta"
-            onClick={() => navigate('/appliance/new')}
-          >
-            <div className="empty-appliance-icon">
-              <Icon name="appliance" size={22} />
-            </div>
-            <div className="empty-appliance-text">
-              <div className="empty-appliance-title">
-                Add your first appliance
-              </div>
-              <div className="empty-appliance-sub">
-                Track maintenance, warranties, and service history.
-              </div>
-            </div>
-            <Icon name="chevronRight" size={20} />
-          </Card>
+          <h2 className="section-title">Common next</h2>
+          <p className="section-sub">
+            Most homes have these. Tap to add one.
+          </p>
+          <div className="common-appliances">
+            {commonAppliances.map((c) => {
+              const CategoryIcon = CATEGORY_ICONS[c.category];
+              return (
+                <button
+                  key={c.key}
+                  type="button"
+                  className="common-appliance-chip"
+                  onClick={() => navigate('/appliance/new')}
+                >
+                  <CategoryIcon size={18} strokeWidth={1.8} />
+                  <span>{c.label}</span>
+                  <Icon name="add" size={14} strokeWidth={2.4} />
+                </button>
+              );
+            })}
+          </div>
         </motion.div>
       )}
 

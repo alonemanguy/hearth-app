@@ -1,4 +1,4 @@
-import { ApplianceCategory } from './types';
+import { Appliance, ApplianceCategory } from './types';
 import { IconName } from './icons';
 
 export type Suggestion = {
@@ -9,6 +9,38 @@ export type Suggestion = {
   icon: IconName;
   reason: string;
 };
+
+export type CommonAppliance = {
+  key: string;
+  label: string;
+  category: ApplianceCategory;
+};
+
+const COMMON_APPLIANCES: CommonAppliance[] = [
+  { key: 'hvac', label: 'HVAC system', category: 'hvac' },
+  { key: 'water-heater', label: 'Water heater', category: 'plumbing' },
+  { key: 'fridge', label: 'Refrigerator', category: 'appliance' },
+  { key: 'dishwasher', label: 'Dishwasher', category: 'appliance' },
+  { key: 'washer-dryer', label: 'Washer / dryer', category: 'appliance' },
+  { key: 'smoke-detector', label: 'Smoke detectors', category: 'electrical' },
+];
+
+export function getCommonApplianceSuggestions(
+  existing: Appliance[]
+): CommonAppliance[] {
+  const existingNames = new Set(
+    existing.map((a) => a.name.toLowerCase().trim())
+  );
+
+  return COMMON_APPLIANCES.filter((c) => {
+    const name = c.label.toLowerCase();
+    for (const existing of existingNames) {
+      if (existing.includes(name.split(' ')[0])) return false;
+      if (name.includes(existing)) return false;
+    }
+    return true;
+  }).slice(0, 4);
+}
 
 export function getSuggestionsForCategory(
   category: ApplianceCategory
