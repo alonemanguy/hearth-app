@@ -999,7 +999,6 @@ svg { display: block; flex-shrink: 0; }
   background: var(--color-primary);
   opacity: 0.4;
 }
-
 .wizard-body {
   flex: 1;
   display: flex;
@@ -1012,7 +1011,6 @@ svg { display: block; flex-shrink: 0; }
   text-align: center;
   padding: var(--space-8) 0;
 }
-
 .wizard-header {
   display: flex;
   flex-direction: column;
@@ -1216,6 +1214,10 @@ svg { display: block; flex-shrink: 0; }
   text-align: center;
   margin-top: var(--space-2);
   font-family: var(--font-family);
+}
+.danger-link:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* --- Inputs --- */
@@ -1744,6 +1746,45 @@ svg { display: block; flex-shrink: 0; }
   text-align: center;
   margin-top: var(--space-2);
   font-family: var(--font-family);
+}
+
+/* --- Snooze sheet --- */
+.snooze-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+.snooze-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-family: var(--font-family);
+  transition: border-color 0.2s ease, background 0.2s ease, transform 0.15s ease;
+  text-align: left;
+  width: 100%;
+}
+.snooze-option:active {
+  transform: scale(0.98);
+}
+.snooze-option:hover {
+  border-color: var(--color-primary);
+  background: rgba(31, 77, 58, 0.04);
+}
+.snooze-option-label {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+.snooze-option-date {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-primary);
 }
 
 /* --- Help Level Picker --- */

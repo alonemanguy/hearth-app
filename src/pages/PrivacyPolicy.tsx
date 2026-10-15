@@ -20,7 +20,7 @@ export default function PrivacyPolicy() {
         <h2>1. Who we are</h2>
         <p>
           Hearth is operated by the Hearth team. For any privacy question, write
-          to <a href="mailto:myabirnjr@gmail.com">myabirnjr@gmail.com</a>.
+          to <a href="mailto:wirtznjr@gmail.com">wirtznjr@gmail.com</a>.
         </p>
 
         <h2>2. What we collect</h2>
@@ -160,7 +160,7 @@ export default function PrivacyPolicy() {
         <h2>12. Contact</h2>
         <p>
           Questions? Email{' '}
-          <a href="mailto:myabirnjr@gmail.com">myabirnjr@gmail.com</a>.
+          <a href="mailto:wirtznjr@gmail.com">wirtznjr@gmail.com</a>.
         </p>
       </div>
     </Screen>

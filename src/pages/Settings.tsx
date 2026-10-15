@@ -9,7 +9,7 @@ import { Icon, IconName } from '../lib/icons';
 import { exportUserData, downloadJson } from '../lib/export';
 
 const APP_VERSION = '1.0.0';
-const SUPPORT_EMAIL = 'myabirnjr@gmail.com';
+const SUPPORT_EMAIL = 'wirtznjr@gmail.com';
 
 type Row = {
   icon: IconName;
@@ -100,9 +100,7 @@ export default function Settings() {
         key={row.label}
         className={`menu-row ${row.danger ? 'menu-row--error' : ''}`}
         onClick={
-          clickable
-            ? row.onClick ?? (() => navigate(row.to!))
-            : undefined
+          clickable ? row.onClick ?? (() => navigate(row.to!)) : undefined
         }
         style={{
           cursor: clickable ? 'pointer' : 'default',

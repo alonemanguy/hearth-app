@@ -9,6 +9,7 @@ import { AuthProvider, useAuth } from './lib/auth';
 import Home from './pages/Home';
 import Add from './pages/Add';
 import Detail from './pages/Detail';
+import EditTask from './pages/EditTask';
 import Profile from './pages/Profile';
 import Login from './pages/Login';
 import Welcome from './pages/Welcome';
@@ -103,6 +104,7 @@ function AppRoutes() {
         <Route path="/" element={<Home />} />
         <Route path="/add" element={<Add />} />
         <Route path="/detail/:id" element={<Detail />} />
+        <Route path="/detail/:id/edit" element={<EditTask />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/property" element={<Property />} />
         <Route path="/appliances" element={<Appliances />} />

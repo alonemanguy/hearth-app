@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, useReducedMotion } from 'motion/react';
+import { createPortal } from 'react-dom';
 import Screen from '../components/Screen';
 import Header from '../components/Header';
 import Card from '../components/Card';
@@ -63,6 +64,19 @@ function formatDate(dateStr: string): string {
   });
 }
 
+function formatShort(dateStr: string): string {
+  return new Date(dateStr).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+  });
+}
+
+function addDays(dateStr: string, days: number): string {
+  const d = new Date(dateStr + 'T00:00:00');
+  d.setDate(d.getDate() + days);
+  return d.toISOString().split('T')[0];
+}
+
 function AnimatedCheck({ reduce }: { reduce: boolean }) {
   if (reduce) {
     return (
@@ -93,6 +107,18 @@ function AnimatedCheck({ reduce }: { reduce: boolean }) {
   );
 }
 
+type SnoozeOption = {
+  label: string;
+  days: number;
+};
+
+const SNOOZE_OPTIONS: SnoozeOption[] = [
+  { label: 'Tomorrow', days: 1 },
+  { label: 'In 3 days', days: 3 },
+  { label: 'Next week', days: 7 },
+  { label: 'Next month', days: 30 },
+];
+
 export default function Detail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -101,14 +127,10 @@ export default function Detail() {
   const [task, setTask] = useState<Task | null>(null);
   const [loading, setLoading] = useState(true);
   const [celebrating, setCelebrating] = useState(false);
-  const [busy, setBusy] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastVisible, setToastVisible] = useState(false);
-
-  const showToast = (msg: string) => {
-    setToastMessage(msg);
-    setToastVisible(true);
-  };
+  const [snoozeOpen, setSnoozeOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -132,6 +154,11 @@ export default function Detail() {
 
     void fetchTask();
   }, [id, navigate]);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setToastVisible(true);
+  };
 
   const markAsDone = async () => {
     if (!task || celebrating) return;
@@ -185,44 +212,52 @@ export default function Detail() {
     setTimeout(() => navigate('/'), reduce ? 400 : 1400);
   };
 
-  const handleSnooze = async () => {
-    if (!task || busy) return;
-    setBusy(true);
+  const handleSnooze = async (days: number) => {
+    if (!task) return;
 
-    const newDate = new Date();
-    newDate.setDate(newDate.getDate() + 7);
-    const isoDate = newDate.toISOString().split('T')[0];
+    const baseDate = new Date().toISOString().split('T')[0];
+    const newDate = addDays(baseDate, days);
 
     const { error } = await supabase
       .from('tasks')
       .update({
-        due_date: isoDate,
+        due_date: newDate,
         status: 'due',
       })
       .eq('id', task.id);
 
-    setBusy(false);
-
     if (error) {
-      console.error('Snooze failed:', error);
+      console.error('Error snoozing task:', error);
       showToast('Could not snooze');
       return;
     }
 
-    showToast(`Snoozed to ${formatDate(isoDate)}`);
-    setTimeout(() => navigate('/'), 1200);
+    setTask({ ...task, due_date: newDate, status: 'due' });
+    setSnoozeOpen(false);
+    showToast(`Snoozed to ${formatShort(newDate)}`);
   };
 
   const handleDelete = async () => {
-    if (!task || busy) return;
-    if (!confirm(`Delete "${task.title}"? This cannot be undone.`)) return;
+    if (!task) return;
+    if (deleting) return;
 
-    setBusy(true);
-    const { error } = await supabase.from('tasks').delete().eq('id', task.id);
-    setBusy(false);
+    if (
+      !confirm(
+        `Delete "${task.title}"? This cannot be undone.`
+      )
+    ) {
+      return;
+    }
+
+    setDeleting(true);
+    const { error } = await supabase
+      .from('tasks')
+      .delete()
+      .eq('id', task.id);
+    setDeleting(false);
 
     if (error) {
-      console.error('Delete failed:', error);
+      console.error('Error deleting task:', error);
       showToast('Could not delete');
       return;
     }
@@ -240,6 +275,56 @@ export default function Detail() {
       </Screen>
     );
   }
+
+  const snoozePortal =
+    snoozeOpen && typeof document !== 'undefined'
+      ? createPortal(
+          <>
+            <div
+              className="sheet-backdrop"
+              onClick={() => setSnoozeOpen(false)}
+            />
+            <div className="sheet">
+              <div className="sheet-handle" />
+              <h3 className="sheet-title">Snooze until when?</h3>
+
+              <div className="snooze-list">
+                {SNOOZE_OPTIONS.map((option) => {
+                  const date = addDays(
+                    new Date().toISOString().split('T')[0],
+                    option.days
+                  );
+                  return (
+                    <button
+                      key={option.label}
+                      type="button"
+                      className="snooze-option"
+                      onClick={() => handleSnooze(option.days)}
+                    >
+                      <span className="snooze-option-label">
+                        {option.label}
+                      </span>
+                      <span className="snooze-option-date">
+                        {formatShort(date)}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="sheet-actions">
+                <button
+                  className="sheet-cancel"
+                  onClick={() => setSnoozeOpen(false)}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </>,
+          document.body
+        )
+      : null;
 
   return (
     <Screen>
@@ -326,79 +411,89 @@ export default function Detail() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5, duration: 0.45, ease: easings.easeOutExpo }}
       >
-        <div className="celebration-wrap">
-          {celebrating && !reduce && (
-            <>
-              <motion.div
-                className="celebration-ring"
-                initial={{ scale: 0.8, opacity: 0.6 }}
-                animate={{ scale: 1.6, opacity: 0 }}
-                transition={{ duration: 0.9, ease: 'easeOut' }}
-              />
-              <motion.div
-                className="celebration-ring celebration-ring--delay"
-                initial={{ scale: 0.8, opacity: 0.6 }}
-                animate={{ scale: 1.6, opacity: 0 }}
-                transition={{ duration: 0.9, ease: 'easeOut', delay: 0.12 }}
-              />
-            </>
-          )}
-
-          <motion.div
-            animate={
-              celebrating && !reduce
-                ? { backgroundColor: '#2E7D32', scale: 1.02 }
-                : { backgroundColor: '#1F4D3A', scale: 1 }
-            }
-            transition={{ type: 'spring', stiffness: 260, damping: 28 }}
-            style={{ borderRadius: '12px', overflow: 'hidden' }}
-          >
-            <button
-              className="btn btn--primary celebration-btn"
-              onClick={markAsDone}
-              disabled={celebrating}
-            >
-              {celebrating ? (
-                <>
-                  <AnimatedCheck reduce={reduce} />
-                  Done
-                </>
-              ) : (
-                'Mark as Done'
-              )}
-            </button>
-          </motion.div>
-        </div>
-
         {!celebrating && (
           <>
+            <div className="celebration-wrap">
+              <motion.div
+                animate={{ backgroundColor: '#1F4D3A' }}
+                transition={{ type: 'spring', stiffness: 260, damping: 28 }}
+                style={{ borderRadius: '12px', overflow: 'hidden' }}
+              >
+                <button
+                  className="btn btn--primary celebration-btn"
+                  onClick={markAsDone}
+                >
+                  Mark as Done
+                </button>
+              </motion.div>
+            </div>
+
             <Button
               variant="secondary"
-              onClick={() => navigate(`/edit/${task.id}`)}
-              disabled={busy}
+              onClick={() => setSnoozeOpen(true)}
+            >
+              Snooze
+            </Button>
+
+            <Button
+              variant="secondary"
+              onClick={() => navigate(`/detail/${task.id}/edit`)}
             >
               <Icon name="edit" size={16} />
               Edit task
             </Button>
-
-            <Button
-              variant="ghost"
-              onClick={handleSnooze}
-              disabled={busy}
-            >
-              Snooze 7 days
-            </Button>
-
-            <button
-              className="danger-link"
-              onClick={handleDelete}
-              disabled={busy}
-            >
-              Delete task
-            </button>
           </>
         )}
+
+        {celebrating && !reduce && (
+          <>
+            <motion.div
+              className="celebration-ring"
+              initial={{ scale: 0.8, opacity: 0.6 }}
+              animate={{ scale: 1.6, opacity: 0 }}
+              transition={{ duration: 0.9, ease: 'easeOut' }}
+            />
+            <motion.div
+              className="celebration-ring celebration-ring--delay"
+              initial={{ scale: 0.8, opacity: 0.6 }}
+              animate={{ scale: 1.6, opacity: 0 }}
+              transition={{ duration: 0.9, ease: 'easeOut', delay: 0.12 }}
+            />
+          </>
+        )}
+
+        {celebrating && (
+          <div className="celebration-wrap">
+            <motion.div
+              animate={{ backgroundColor: '#2E7D32', scale: 1.02 }}
+              transition={{ type: 'spring', stiffness: 260, damping: 28 }}
+              style={{ borderRadius: '12px', overflow: 'hidden' }}
+            >
+              <button
+                className="btn btn--primary celebration-btn"
+                disabled
+              >
+                <AnimatedCheck reduce={reduce} />
+                Done
+              </button>
+            </motion.div>
+          </div>
+        )}
       </motion.div>
+
+      {!celebrating && (
+        <div style={{ marginTop: 32, textAlign: 'center' }}>
+          <button
+            className="danger-link"
+            onClick={handleDelete}
+            disabled={deleting}
+          >
+            {deleting ? 'Deleting...' : 'Delete task'}
+          </button>
+        </div>
+      )}
+
+      {snoozePortal}
 
       <Toast
         message={toastMessage}
