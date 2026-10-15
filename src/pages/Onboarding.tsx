@@ -9,13 +9,21 @@ import HelpLevelPicker from '../components/HelpLevelPicker';
 import { useAuth, HelpLevel } from '../lib/auth';
 import { supabase } from '../lib/supabase';
 import { easings } from '../lib/motion';
-import { Icon } from '../lib/icons';
 import { ApplianceCategory, CATEGORY_LABELS } from '../lib/types';
 import { CATEGORY_ICONS } from '../lib/icons';
 
-type Step = 'welcome' | 'terms' | 'home' | 'appliance' | 'done';
+type Step = 'welcome' | 'name' | 'terms' | 'home' | 'appliance' | 'done';
 
-const STEPS: Step[] = ['welcome', 'terms', 'home', 'appliance', 'done'];
+const STEPS: Step[] = [
+  'welcome',
+  'name',
+  'terms',
+  'home',
+  'appliance',
+  'done',
+];
+
+const PROGRESS_STEPS: Step[] = ['welcome', 'name', 'terms', 'home', 'appliance'];
 
 const CATEGORIES: ApplianceCategory[] = [
   'hvac',
@@ -34,22 +42,26 @@ export default function Onboarding() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Step 1
+  // Step 1 — help level
   const [level, setLevel] = useState<HelpLevel>('guided');
 
-  // Step 2
+  // Step 2 — display name
+  const [firstName, setFirstName] = useState('');
+
+  // Step 3 — terms
   const [ageConfirmed, setAgeConfirmed] = useState(false);
 
-  // Step 3
+  // Step 4 — home
   const [homeNickname, setHomeNickname] = useState('');
   const [homeYear, setHomeYear] = useState('');
 
-  // Step 4
+  // Step 5 — appliance
   const [applianceName, setApplianceName] = useState('');
   const [applianceCategory, setApplianceCategory] =
     useState<ApplianceCategory>('appliance');
 
   const stepIndex = STEPS.indexOf(step);
+  const progressIndex = PROGRESS_STEPS.indexOf(step);
 
   const goTo = (s: Step) => {
     setError(null);
@@ -69,7 +81,7 @@ export default function Onboarding() {
   const handleFinish = async () => {
     setBusy(true);
     setError(null);
-    await completeOnboarding(level);
+    await completeOnboarding(level, firstName);
     setBusy(false);
     navigate('/');
   };
@@ -77,7 +89,6 @@ export default function Onboarding() {
   const handleSaveHome = async () => {
     if (!user) return;
 
-    // Optional step — if empty, just move on
     if (!homeNickname.trim()) {
       goNext();
       return;
@@ -123,20 +134,19 @@ export default function Onboarding() {
   };
 
   /* ---------------------------------------------------------------- */
-  /* Step renderers                                                   */
+  /* Progress dots                                                    */
   /* ---------------------------------------------------------------- */
-
   const renderProgress = () => {
     if (step === 'done') return null;
     return (
       <div className="wizard-progress">
-        {STEPS.slice(0, 4).map((s, i) => (
+        {PROGRESS_STEPS.map((s, i) => (
           <div
             key={s}
             className={`wizard-progress-dot ${
-              i === stepIndex
+              i === progressIndex
                 ? 'wizard-progress-dot--active'
-                : i < stepIndex
+                : i < progressIndex
                 ? 'wizard-progress-dot--done'
                 : ''
             }`}
@@ -146,6 +156,9 @@ export default function Onboarding() {
     );
   };
 
+  /* ---------------------------------------------------------------- */
+  /* Step: welcome                                                    */
+  /* ---------------------------------------------------------------- */
   const renderWelcome = () => (
     <motion.div
       className="wizard-body"
@@ -185,6 +198,54 @@ export default function Onboarding() {
     </motion.div>
   );
 
+  /* ---------------------------------------------------------------- */
+  /* Step: name                                                       */
+  /* ---------------------------------------------------------------- */
+  const renderName = () => (
+    <motion.div
+      className="wizard-body"
+      key="name"
+      initial={reduce ? false : { opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={reduce ? undefined : { opacity: 0, y: -8 }}
+      transition={{ duration: 0.4, ease: easings.easeOutExpo }}
+    >
+      <div className="wizard-header">
+        <h1 className="wizard-title">What should we call you?</h1>
+        <p className="wizard-subtitle">
+          We'll use your first name for greetings and reminders.
+        </p>
+      </div>
+
+      <div className="wizard-content">
+        <Input
+          id="onboarding-name"
+          label="First name"
+          value={firstName}
+          onChange={setFirstName}
+          placeholder="e.g. Alex"
+          autoComplete="given-name"
+          autoFocus
+        />
+      </div>
+
+      <div className="wizard-actions">
+        <Button
+          onClick={goNext}
+          disabled={!firstName.trim()}
+        >
+          Continue
+        </Button>
+        <button className="wizard-back" onClick={goBack}>
+          Back
+        </button>
+      </div>
+    </motion.div>
+  );
+
+  /* ---------------------------------------------------------------- */
+  /* Step: terms                                                      */
+  /* ---------------------------------------------------------------- */
   const renderTerms = () => (
     <motion.div
       className="wizard-body"
@@ -234,6 +295,9 @@ export default function Onboarding() {
     </motion.div>
   );
 
+  /* ---------------------------------------------------------------- */
+  /* Step: home                                                       */
+  /* ---------------------------------------------------------------- */
   const renderHome = () => (
     <motion.div
       className="wizard-body"
@@ -255,41 +319,34 @@ export default function Onboarding() {
           label="Nickname"
           value={homeNickname}
           onChange={setHomeNickname}
-          placeholder="e.g. Home, Beach House"
+          placeholder="e.g. Cozy Nest, The Cabin"
         />
         <Input
           label="Year built (optional)"
           value={homeYear}
           onChange={setHomeYear}
-          placeholder="1998"
+          placeholder="e.g. 1998"
         />
       </div>
 
       <div className="wizard-actions">
-        <Button
-          onClick={handleSaveHome}
-          disabled={busy}
-        >
+        <Button onClick={handleSaveHome} disabled={busy}>
           {busy
             ? 'Saving...'
             : homeNickname.trim()
             ? 'Save home'
             : 'Skip for now'}
         </Button>
-        {!homeNickname.trim() && (
-          <button className="wizard-back" onClick={goBack}>
-            Back
-          </button>
-        )}
-        {homeNickname.trim() && (
-          <button className="wizard-back" onClick={goBack}>
-            Back
-          </button>
-        )}
+        <button className="wizard-back" onClick={goBack}>
+          Back
+        </button>
       </div>
     </motion.div>
   );
 
+  /* ---------------------------------------------------------------- */
+  /* Step: appliance                                                  */
+  /* ---------------------------------------------------------------- */
   const renderAppliance = () => (
     <motion.div
       className="wizard-body"
@@ -340,10 +397,7 @@ export default function Onboarding() {
       </div>
 
       <div className="wizard-actions">
-        <Button
-          onClick={handleSaveAppliance}
-          disabled={busy}
-        >
+        <Button onClick={handleSaveAppliance} disabled={busy}>
           {busy
             ? 'Saving...'
             : applianceName.trim()
@@ -357,6 +411,9 @@ export default function Onboarding() {
     </motion.div>
   );
 
+  /* ---------------------------------------------------------------- */
+  /* Step: done                                                       */
+  /* ---------------------------------------------------------------- */
   const renderDone = () => (
     <motion.div
       className="wizard-body wizard-body--done"
@@ -393,7 +450,9 @@ export default function Onboarding() {
         </svg>
       </motion.div>
 
-      <h1 className="wizard-title">You're all set</h1>
+      <h1 className="wizard-title">
+        You're all set{firstName.trim() ? `, ${firstName.trim()}` : ''}
+      </h1>
       <p className="wizard-subtitle">
         Hearth is ready. Add tasks as they come up — or just let the reminders
         find you.
@@ -417,6 +476,7 @@ export default function Onboarding() {
           </div>
         )}
         {step === 'welcome' && renderWelcome()}
+        {step === 'name' && renderName()}
         {step === 'terms' && renderTerms()}
         {step === 'home' && renderHome()}
         {step === 'appliance' && renderAppliance()}

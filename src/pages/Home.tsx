@@ -105,7 +105,8 @@ function ApplianceCard({ appliance }: { appliance: Appliance }) {
 
 export default function Home() {
   const navigate = useNavigate();
-  const { helpLevel, user } = useAuth();
+  const { helpLevel, user, displayName } = useAuth();
+  const reduce = useReducedMotion();
   const [state, setState] = useState<ViewState>('loading');
   const [tasks, setTasks] = useState<Task[]>([]);
   const [appliances, setAppliances] = useState<Appliance[]>([]);
@@ -173,8 +174,10 @@ export default function Home() {
 
   const activeCount = tasks.filter((t) => t.status !== 'done').length;
   const emptyCopy = EMPTY_COPY[helpLevel];
-  const userName = user?.email?.split('@')[0] ?? 'there';
-  const greeting = `Good morning, ${userName}`;
+
+  // Greeting: display name first, then "there" fallback. Never the email username.
+  const greetingName = displayName?.trim() || 'there';
+  const greeting = `Good morning, ${greetingName}`;
 
   const applianceById = Object.fromEntries(appliances.map((a) => [a.id, a]));
 
@@ -188,6 +191,11 @@ export default function Home() {
   const health = computeHealthReport(property, appliances, tasks);
   const healthColor = scoreColor(health.total);
 
+  // Only show the numeric health score once the user has enough data.
+  // Otherwise show a soft "getting started" card.
+  const dataPoints = appliances.length + tasks.length;
+  const showHealthScore = dataPoints >= 3;
+
   return (
     <Screen>
       <Header
@@ -200,7 +208,7 @@ export default function Home() {
       {propertyName && (
         <motion.div
           className="home-context"
-          initial={{ opacity: 0, y: -4 }}
+          initial={reduce ? false : { opacity: 0, y: -4 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35, ease: easings.easeOutExpo }}
         >
@@ -209,42 +217,72 @@ export default function Home() {
         </motion.div>
       )}
 
-      {/* Home Health Score preview */}
-      <motion.div
-        initial={reduceAnim()}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{
-          duration: 0.45,
-          ease: easings.easeOutExpo,
-          delay: 0.05,
-        }}
-      >
-        <Card
-          className="health-preview"
-          onClick={() => navigate('/health')}
-          style={{ borderLeft: `3px solid ${healthColor}` }}
+      {/* Home Health — full score when there's enough data */}
+      {showHealthScore && (
+        <motion.div
+          initial={reduce ? false : { opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{
+            duration: 0.45,
+            ease: easings.easeOutExpo,
+            delay: reduce ? 0 : 0.05,
+          }}
         >
-          <ScoreRing
-            score={health.total}
-            size={56}
-            strokeWidth={6}
-            showNumber={false}
-          />
-          <div className="health-preview-body">
-            <div className="health-preview-eyebrow">HOME HEALTH</div>
-            <div
-              className="health-preview-title"
-              style={{ color: healthColor }}
-            >
-              {health.categoryLabel}
+          <Card
+            className="health-preview"
+            onClick={() => navigate('/health')}
+            style={{ borderLeft: `3px solid ${healthColor}` }}
+          >
+            <ScoreRing
+              score={health.total}
+              size={56}
+              strokeWidth={6}
+              showNumber={false}
+            />
+            <div className="health-preview-body">
+              <div className="health-preview-eyebrow">HOME HEALTH</div>
+              <div
+                className="health-preview-title"
+                style={{ color: healthColor }}
+              >
+                {health.categoryLabel}
+              </div>
+              <div className="health-preview-sub">{health.total} / 100</div>
             </div>
-            <div className="health-preview-sub">
-              {health.total} / 100
+            <Icon name="chevronRight" size={20} />
+          </Card>
+        </motion.div>
+      )}
+
+      {/* Home Health — soft "getting started" state */}
+      {!showHealthScore && (
+        <motion.div
+          initial={reduce ? false : { opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{
+            duration: 0.45,
+            ease: easings.easeOutExpo,
+            delay: reduce ? 0 : 0.05,
+          }}
+        >
+          <Card
+            className="health-starting"
+            onClick={() => navigate('/health')}
+          >
+            <div className="health-starting-icon">
+              <Icon name="sparkles" size={22} />
             </div>
-          </div>
-          <Icon name="chevronRight" size={20} />
-        </Card>
-      </motion.div>
+            <div className="health-starting-body">
+              <div className="health-starting-eyebrow">HOME HEALTH</div>
+              <div className="health-starting-title">Just getting started</div>
+              <div className="health-starting-sub">
+                Add a few appliances and tasks to unlock your home's score.
+              </div>
+            </div>
+            <Icon name="chevronRight" size={20} />
+          </Card>
+        </motion.div>
+      )}
 
       {state === 'loading' && (
         <motion.div
@@ -400,8 +438,4 @@ export default function Home() {
       )}
     </Screen>
   );
-}
-
-function reduceAnim() {
-  return false;
 }

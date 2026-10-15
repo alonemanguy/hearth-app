@@ -1,4 +1,10 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode,
+} from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from './supabase';
 
@@ -10,11 +16,16 @@ type AuthContextType = {
   loading: boolean;
   helpLevel: HelpLevel;
   hasOnboarded: boolean;
+  displayName: string | null;
   signUp: (email: string, password: string) => Promise<{ error: string | null }>;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
   setHelpLevel: (level: HelpLevel) => Promise<void>;
-  completeOnboarding: (level: HelpLevel) => Promise<void>;
+  setDisplayName: (name: string) => Promise<void>;
+  completeOnboarding: (
+    level: HelpLevel,
+    displayName?: string
+  ) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -31,12 +42,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-      }
-    );
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+    });
 
     return () => subscription.unsubscribe();
   }, []);
@@ -47,7 +58,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
     return { error: error?.message ?? null };
   };
 
@@ -59,23 +73,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data, error } = await supabase.auth.updateUser({
       data: { help_level: level },
     });
-    if (!error && data.user) {
-      setUser(data.user);
-    }
+    if (!error && data.user) setUser(data.user);
   };
 
-  const completeOnboarding = async (level: HelpLevel) => {
+  const setDisplayName = async (name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
     const { data, error } = await supabase.auth.updateUser({
-      data: { help_level: level, has_onboarded: true },
+      data: { display_name: trimmed },
     });
-    if (!error && data.user) {
-      setUser(data.user);
+    if (!error && data.user) setUser(data.user);
+  };
+
+  const completeOnboarding = async (
+    level: HelpLevel,
+    displayName?: string
+  ) => {
+    const payload: Record<string, unknown> = {
+      help_level: level,
+      has_onboarded: true,
+    };
+    if (displayName && displayName.trim()) {
+      payload.display_name = displayName.trim();
     }
+    const { data, error } = await supabase.auth.updateUser({ data: payload });
+    if (!error && data.user) setUser(data.user);
   };
 
   const helpLevel: HelpLevel =
     (user?.user_metadata?.help_level as HelpLevel | undefined) ?? 'guided';
   const hasOnboarded = Boolean(user?.user_metadata?.has_onboarded);
+  const displayName: string | null =
+    (user?.user_metadata?.display_name as string | undefined) ?? null;
 
   return (
     <AuthContext.Provider
@@ -85,10 +114,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loading,
         helpLevel,
         hasOnboarded,
+        displayName,
         signUp,
         signIn,
         signOut,
         setHelpLevel,
+        setDisplayName,
         completeOnboarding,
       }}
     >

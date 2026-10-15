@@ -836,6 +836,50 @@ svg { display: block; flex-shrink: 0; }
   margin-top: 1px;
 }
 
+/* --- Health: getting started (soft state) --- */
+.health-starting {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  cursor: pointer;
+  padding: var(--space-4);
+  margin-bottom: var(--space-4);
+  border: 1px dashed var(--color-border);
+  background: rgba(31, 77, 58, 0.02);
+}
+.health-starting-icon {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(31, 77, 58, 0.06);
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+  color: var(--color-primary);
+}
+.health-starting-body { flex: 1; min-width: 0; }
+.health-starting-eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+}
+.health-starting-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-top: 2px;
+  letter-spacing: -0.01em;
+}
+.health-starting-sub {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  margin-top: 3px;
+  line-height: 1.4;
+}
+
 .health-hero {
   display: flex;
   flex-direction: column;
@@ -1246,6 +1290,14 @@ svg { display: block; flex-shrink: 0; }
     border-color 0.2s ease,
     box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
+
+/* Placeholder styling — light + italic so it never reads as a real value */
+.input-group input::placeholder,
+.input-group textarea::placeholder {
+  color: rgba(107, 107, 107, 0.4);
+  font-style: italic;
+}
+
 .input-group input:focus,
 .input-group select:focus,
 .input-group textarea:focus {
@@ -1769,9 +1821,7 @@ svg { display: block; flex-shrink: 0; }
   text-align: left;
   width: 100%;
 }
-.snooze-option:active {
-  transform: scale(0.98);
-}
+.snooze-option:active { transform: scale(0.98); }
 .snooze-option:hover {
   border-color: var(--color-primary);
   background: rgba(31, 77, 58, 0.04);
