@@ -1,4 +1,5 @@
 import { useState, FormEvent } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, useReducedMotion } from 'motion/react';
 import Screen from '../components/Screen';
 import Input from '../components/Input';
@@ -11,6 +12,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function Login() {
   const { signIn, signUp } = useAuth();
+  const navigate = useNavigate();
   const reduce = useReducedMotion();
 
   const [email, setEmail] = useState('');
@@ -159,6 +161,16 @@ export default function Login() {
               ? 'Already have an account? Sign in'
               : "Don't have an account? Sign up"}
           </button>
+
+          {!isSignUp && (
+            <button
+              type="button"
+              className="auth-toggle"
+              onClick={() => navigate('/forgot-password')}
+            >
+              Forgot your password?
+            </button>
+          )}
         </motion.div>
       </form>
     </Screen>

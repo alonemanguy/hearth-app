@@ -13,6 +13,8 @@ import Profile from './pages/Profile';
 import Login from './pages/Login';
 import Welcome from './pages/Welcome';
 import Onboarding from './pages/Onboarding';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import Property from './pages/Property';
 import Appliances from './pages/Appliances';
 import ApplianceDetail from './pages/ApplianceDetail';
@@ -32,15 +34,21 @@ function AppRoutes() {
   const { user, loading, hasOnboarded } = useAuth();
   const location = useLocation();
 
-  if (
+  // Public routes — always available regardless of auth state
+  const alwaysPublic =
     location.pathname === '/privacy' ||
-    location.pathname === '/terms'
-  ) {
+    location.pathname === '/terms' ||
+    location.pathname === '/forgot-password' ||
+    location.pathname === '/reset-password';
+
+  if (alwaysPublic) {
     return (
       <>
         <Routes>
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<Terms />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
         </Routes>
         <CookieConsent />
       </>
@@ -96,6 +104,7 @@ function AppRoutes() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/add" element={<Add />} />
+        <Route path="/edit/:id" element={<Add />} />
         <Route path="/detail/:id" element={<Detail />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/property" element={<Property />} />

@@ -10,6 +10,7 @@ import Skeleton from '../components/Skeleton';
 import Toast from '../components/Toast';
 import { supabase } from '../lib/supabase';
 import { easings } from '../lib/motion';
+import { Icon } from '../lib/icons';
 
 type Task = {
   id: string;
@@ -100,8 +101,14 @@ export default function Detail() {
   const [task, setTask] = useState<Task | null>(null);
   const [loading, setLoading] = useState(true);
   const [celebrating, setCelebrating] = useState(false);
+  const [busy, setBusy] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastVisible, setToastVisible] = useState(false);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setToastVisible(true);
+  };
 
   useEffect(() => {
     if (!id) return;
@@ -170,13 +177,57 @@ export default function Detail() {
     }
 
     if (nextDate) {
-      setToastMessage(`Done — next one ${formatDate(nextDate)}`);
+      showToast(`Done — next one ${formatDate(nextDate)}`);
     } else {
-      setToastMessage('Task completed');
+      showToast('Task completed');
     }
-    setToastVisible(true);
 
     setTimeout(() => navigate('/'), reduce ? 400 : 1400);
+  };
+
+  const handleSnooze = async () => {
+    if (!task || busy) return;
+    setBusy(true);
+
+    const newDate = new Date();
+    newDate.setDate(newDate.getDate() + 7);
+    const isoDate = newDate.toISOString().split('T')[0];
+
+    const { error } = await supabase
+      .from('tasks')
+      .update({
+        due_date: isoDate,
+        status: 'due',
+      })
+      .eq('id', task.id);
+
+    setBusy(false);
+
+    if (error) {
+      console.error('Snooze failed:', error);
+      showToast('Could not snooze');
+      return;
+    }
+
+    showToast(`Snoozed to ${formatDate(isoDate)}`);
+    setTimeout(() => navigate('/'), 1200);
+  };
+
+  const handleDelete = async () => {
+    if (!task || busy) return;
+    if (!confirm(`Delete "${task.title}"? This cannot be undone.`)) return;
+
+    setBusy(true);
+    const { error } = await supabase.from('tasks').delete().eq('id', task.id);
+    setBusy(false);
+
+    if (error) {
+      console.error('Delete failed:', error);
+      showToast('Could not delete');
+      return;
+    }
+
+    navigate('/');
   };
 
   if (loading || !task) {
@@ -320,9 +371,32 @@ export default function Detail() {
         </div>
 
         {!celebrating && (
-          <Button variant="secondary" onClick={() => navigate('/')}>
-            Snooze
-          </Button>
+          <>
+            <Button
+              variant="secondary"
+              onClick={() => navigate(`/edit/${task.id}`)}
+              disabled={busy}
+            >
+              <Icon name="edit" size={16} />
+              Edit task
+            </Button>
+
+            <Button
+              variant="ghost"
+              onClick={handleSnooze}
+              disabled={busy}
+            >
+              Snooze 7 days
+            </Button>
+
+            <button
+              className="danger-link"
+              onClick={handleDelete}
+              disabled={busy}
+            >
+              Delete task
+            </button>
+          </>
         )}
       </motion.div>
 
