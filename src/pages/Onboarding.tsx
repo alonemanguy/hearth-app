@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, useReducedMotion, AnimatePresence } from 'motion/react';
+import { motion, useReducedMotion } from 'motion/react';
 import Screen from '../components/Screen';
 import Button from '../components/Button';
 import Input from '../components/Input';
@@ -9,7 +9,6 @@ import HelpLevelPicker from '../components/HelpLevelPicker';
 import { useAuth, HelpLevel } from '../lib/auth';
 import { supabase } from '../lib/supabase';
 import { easings } from '../lib/motion';
-import { Icon } from '../lib/icons';
 import { ApplianceCategory, CATEGORY_LABELS } from '../lib/types';
 import { CATEGORY_ICONS } from '../lib/icons';
 
@@ -49,24 +48,15 @@ export default function Onboarding() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Step 1
   const [level, setLevel] = useState<HelpLevel>('guided');
-
-  // Step 2
   const [firstName, setFirstName] = useState('');
-
-  // Step 3
   const [ageConfirmed, setAgeConfirmed] = useState(false);
-
-  // Step 4
   const [homeNickname, setHomeNickname] = useState('');
   const [homeYear, setHomeYear] = useState('');
 
-  // Step 5
   const [applianceName, setApplianceName] = useState('');
   const [applianceCategory, setApplianceCategory] =
     useState<ApplianceCategory>('appliance');
-  const [detailsOpen, setDetailsOpen] = useState(false);
   const [applianceMake, setApplianceMake] = useState('');
   const [applianceModel, setApplianceModel] = useState('');
   const [warrantyExpiry, setWarrantyExpiry] = useState('');
@@ -99,12 +89,10 @@ export default function Onboarding() {
 
   const handleSaveHome = async () => {
     if (!user) return;
-
     if (!homeNickname.trim()) {
       goNext();
       return;
     }
-
     setBusy(true);
     const { error: err } = await supabase.from('properties').insert({
       user_id: user.id,
@@ -113,7 +101,6 @@ export default function Onboarding() {
       home_type: 'house',
     });
     setBusy(false);
-
     if (err) {
       setError(err.message);
       return;
@@ -123,12 +110,10 @@ export default function Onboarding() {
 
   const handleSaveAppliance = async () => {
     if (!user) return;
-
     if (!applianceName.trim()) {
       goNext();
       return;
     }
-
     setBusy(true);
     const { error: err } = await supabase.from('appliances').insert({
       user_id: user.id,
@@ -139,7 +124,6 @@ export default function Onboarding() {
       warranty_expires_at: warrantyExpiry || null,
     });
     setBusy(false);
-
     if (err) {
       setError(err.message);
       return;
@@ -147,9 +131,6 @@ export default function Onboarding() {
     goNext();
   };
 
-  /* ---------------------------------------------------------------- */
-  /* Progress dots                                                    */
-  /* ---------------------------------------------------------------- */
   const renderProgress = () => {
     if (step === 'done') return null;
     return (
@@ -170,9 +151,6 @@ export default function Onboarding() {
     );
   };
 
-  /* ---------------------------------------------------------------- */
-  /* Step: welcome                                                    */
-  /* ---------------------------------------------------------------- */
   const renderWelcome = () => (
     <motion.div
       className="wizard-body"
@@ -212,9 +190,6 @@ export default function Onboarding() {
     </motion.div>
   );
 
-  /* ---------------------------------------------------------------- */
-  /* Step: name                                                       */
-  /* ---------------------------------------------------------------- */
   const renderName = () => (
     <motion.div
       className="wizard-body"
@@ -254,9 +229,6 @@ export default function Onboarding() {
     </motion.div>
   );
 
-  /* ---------------------------------------------------------------- */
-  /* Step: terms                                                      */
-  /* ---------------------------------------------------------------- */
   const renderTerms = () => (
     <motion.div
       className="wizard-body"
@@ -306,9 +278,6 @@ export default function Onboarding() {
     </motion.div>
   );
 
-  /* ---------------------------------------------------------------- */
-  /* Step: home                                                       */
-  /* ---------------------------------------------------------------- */
   const renderHome = () => (
     <motion.div
       className="wizard-body"
@@ -355,9 +324,6 @@ export default function Onboarding() {
     </motion.div>
   );
 
-  /* ---------------------------------------------------------------- */
-  /* Step: appliance                                                  */
-  /* ---------------------------------------------------------------- */
   const renderAppliance = () => (
     <motion.div
       className="wizard-body"
@@ -370,7 +336,7 @@ export default function Onboarding() {
       <div className="wizard-header">
         <h1 className="wizard-title">Add your first appliance</h1>
         <p className="wizard-subtitle">
-          Hearth tracks warranties and maintenance for each appliance.
+          This is what lets Hearth remind you about maintenance and warranties.
         </p>
       </div>
 
@@ -406,55 +372,34 @@ export default function Onboarding() {
           </div>
         </div>
 
-        <button
-          type="button"
-          className="details-toggle"
-          onClick={() => setDetailsOpen((v) => !v)}
-        >
-          <span>{detailsOpen ? 'Hide details' : 'Add details (optional)'}</span>
-          <motion.span
-            animate={{ rotate: detailsOpen ? 180 : 0 }}
-            transition={{ duration: 0.25 }}
-            style={{ display: 'inline-flex' }}
-          >
-            <Icon name="chevronDown" size={16} />
-          </motion.span>
-        </button>
+        <div className="details-section-header">
+          <span className="details-section-title">Details</span>
+          <span className="details-section-hint">
+            Helps Hearth track warranties. Skip if you don't know them yet.
+          </span>
+        </div>
 
-        <AnimatePresence initial={false}>
-          {detailsOpen && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.3, ease: easings.easeOutExpo }}
-              style={{ overflow: 'hidden' }}
-            >
-              <div style={{ paddingTop: 16 }}>
-                <div className="input-row">
-                  <Input
-                    label="Make"
-                    value={applianceMake}
-                    onChange={setApplianceMake}
-                    placeholder="Whirlpool"
-                  />
-                  <Input
-                    label="Model"
-                    value={applianceModel}
-                    onChange={setApplianceModel}
-                    placeholder="WRX735"
-                  />
-                </div>
-                <Input
-                  label="Warranty expires"
-                  type="date"
-                  value={warrantyExpiry}
-                  onChange={setWarrantyExpiry}
-                />
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <div className="input-row">
+          <Input
+            label="Make"
+            value={applianceMake}
+            onChange={setApplianceMake}
+            placeholder="Whirlpool"
+          />
+          <Input
+            label="Model"
+            value={applianceModel}
+            onChange={setApplianceModel}
+            placeholder="WRX735"
+          />
+        </div>
+
+        <Input
+          label="Warranty expires"
+          type="date"
+          value={warrantyExpiry}
+          onChange={setWarrantyExpiry}
+        />
       </div>
 
       <div className="wizard-actions">
@@ -472,9 +417,6 @@ export default function Onboarding() {
     </motion.div>
   );
 
-  /* ---------------------------------------------------------------- */
-  /* Step: done                                                       */
-  /* ---------------------------------------------------------------- */
   const renderDone = () => (
     <motion.div
       className="wizard-body wizard-body--done"

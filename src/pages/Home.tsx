@@ -25,6 +25,8 @@ import { Suggestion, getSuggestionsForCategory } from '../lib/suggestions';
 
 type ViewState = 'loading' | 'error' | 'empty' | 'populated';
 
+const WELCOME_KEY = 'hearth.welcome.dismissed.v1';
+
 const EMPTY_COPY: Record<HelpLevel, { body: string; cta: string }> = {
   basic: {
     body: 'Add your first task to get started.',
@@ -93,22 +95,78 @@ function Odometer({ value }: { value: number }) {
   );
 }
 
-function getWarrantyStatus(expiresAt: string | null) {
-  if (!expiresAt) return null;
+type NextAction = {
+  label: string;
+  tone: 'warning' | 'error' | 'info' | 'success';
+};
+
+function getApplianceNextAction(
+  appliance: Appliance,
+  tasks: Task[]
+): NextAction {
   const now = new Date();
   now.setHours(0, 0, 0, 0);
-  const exp = new Date(expiresAt);
-  const days = Math.ceil((exp.getTime() - now.getTime()) / 86400000);
-  if (days < 0) return { label: 'Warranty expired', tone: 'error' as const };
-  if (days <= 30) return { label: `${days}d warranty`, tone: 'warning' as const };
-  return { label: 'Under warranty', tone: 'success' as const };
+
+  const openTasks = tasks.filter(
+    (t) => t.appliance_id === appliance.id && t.status !== 'done'
+  );
+
+  // Priority 1: overdue tasks
+  const overdue = openTasks.find(
+    (t) => new Date(t.due_date).getTime() < now.getTime()
+  );
+  if (overdue) {
+    const days = Math.ceil(
+      (now.getTime() - new Date(overdue.due_date).getTime()) / 86400000
+    );
+    return { label: `${days}d overdue`, tone: 'error' };
+  }
+
+  // Priority 2: next task due soon
+  const nextTask = openTasks[0];
+  if (nextTask) {
+    const days = Math.ceil(
+      (new Date(nextTask.due_date).getTime() - now.getTime()) / 86400000
+    );
+    if (days <= 7) {
+      return {
+        label: days === 0 ? 'Due today' : `Due in ${days}d`,
+        tone: 'warning',
+      };
+    }
+    return {
+      label: `Next ${new Date(nextTask.due_date).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+      })}`,
+      tone: 'info',
+    };
+  }
+
+  // Priority 3: warranty
+  if (appliance.warranty_expires_at) {
+    const exp = new Date(appliance.warranty_expires_at);
+    const days = Math.ceil((exp.getTime() - now.getTime()) / 86400000);
+    if (days < 0) return { label: 'Warranty expired', tone: 'error' };
+    if (days <= 30) return { label: `${days}d warranty`, tone: 'warning' };
+    return { label: 'Under warranty', tone: 'success' };
+  }
+
+  // Priority 4: prompt
+  return { label: 'Add warranty', tone: 'info' };
 }
 
-function ApplianceCard({ appliance }: { appliance: Appliance }) {
+function ApplianceCard({
+  appliance,
+  tasks,
+}: {
+  appliance: Appliance;
+  tasks: Task[];
+}) {
   const navigate = useNavigate();
   const reduce = useReducedMotion();
   const categoryIconName: IconName = CATEGORY_ICON_NAMES[appliance.category];
-  const warranty = getWarrantyStatus(appliance.warranty_expires_at);
+  const next = getApplianceNextAction(appliance, tasks);
 
   return (
     <motion.div
@@ -120,14 +178,9 @@ function ApplianceCard({ appliance }: { appliance: Appliance }) {
     >
       <Icon name={categoryIconName} size={28} strokeWidth={1.8} />
       <div className="appliance-name">{appliance.name}</div>
-      <div className="appliance-cat">{CATEGORY_LABELS[appliance.category]}</div>
-      {warranty && (
-        <span
-          className={`appliance-mini-pill appliance-mini-pill--${warranty.tone}`}
-        >
-          {warranty.label}
-        </span>
-      )}
+      <div className={`appliance-next appliance-next--${next.tone}`}>
+        {next.label}
+      </div>
     </motion.div>
   );
 }
@@ -146,6 +199,11 @@ export default function Home() {
   const [addingSuggestion, setAddingSuggestion] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState('');
   const [toastVisible, setToastVisible] = useState(false);
+  const [welcomeDismissed, setWelcomeDismissed] = useState(true);
+
+  useEffect(() => {
+    setWelcomeDismissed(Boolean(localStorage.getItem(WELCOME_KEY)));
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -209,6 +267,11 @@ export default function Home() {
     setToastVisible(true);
   };
 
+  const dismissWelcome = () => {
+    localStorage.setItem(WELCOME_KEY, '1');
+    setWelcomeDismissed(true);
+  };
+
   const handleAddSuggestion = async (
     suggestion: Suggestion,
     appliance: Appliance
@@ -238,6 +301,7 @@ export default function Home() {
       return;
     }
 
+    dismissWelcome();
     showToast('Task added');
     await fetchAll();
   };
@@ -263,7 +327,6 @@ export default function Home() {
   const dataPoints = appliances.length + tasks.length;
   const showHealthScore = dataPoints >= 3;
 
-  // Suggestions when no tasks but has appliances
   const showSuggestions = state === 'empty' && appliances.length > 0;
   const suggestions: { suggestion: Suggestion; appliance: Appliance }[] = [];
   if (showSuggestions) {
@@ -278,6 +341,10 @@ export default function Home() {
       }
     }
   }
+
+  // Show the welcome hint if user is fresh (< 2 data points) and hasn't dismissed
+  const isFresh = dataPoints < 2;
+  const showWelcomeCard = !welcomeDismissed && isFresh && state !== 'loading';
 
   return (
     <Screen>
@@ -297,6 +364,66 @@ export default function Home() {
         >
           <Icon name="home" size={14} strokeWidth={2.2} />
           <span className="home-context-name">{propertyName}</span>
+        </motion.div>
+      )}
+
+      {showWelcomeCard && (
+        <motion.div
+          initial={reduce ? false : { opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, ease: easings.easeOutExpo }}
+        >
+          <Card className="home-welcome">
+            <button
+              className="home-welcome-close"
+              onClick={dismissWelcome}
+              aria-label="Dismiss"
+              type="button"
+            >
+              <Icon name="close" size={16} />
+            </button>
+            <div className="home-welcome-title">
+              Hearth gets useful fast
+            </div>
+            <div className="home-welcome-sub">
+              Start with one of these — takes less than a minute.
+            </div>
+            <div className="home-welcome-actions">
+              <button
+                className="home-welcome-action"
+                onClick={() => navigate('/appliance/new')}
+                type="button"
+              >
+                <span className="home-welcome-action-icon">
+                  <Icon name="appliance" size={18} />
+                </span>
+                <span>Add an appliance</span>
+                <Icon name="chevronRight" size={16} />
+              </button>
+              <button
+                className="home-welcome-action"
+                onClick={() => navigate('/add')}
+                type="button"
+              >
+                <span className="home-welcome-action-icon">
+                  <Icon name="add" size={18} />
+                </span>
+                <span>Add a task</span>
+                <Icon name="chevronRight" size={16} />
+              </button>
+              <button
+                className="home-welcome-action"
+                onClick={() => navigate('/health')}
+                type="button"
+              >
+                <span className="home-welcome-action-icon">
+                  <Icon name="sparkles" size={18} />
+                </span>
+                <span>See Home Health</span>
+                <Icon name="chevronRight" size={16} />
+              </button>
+            </div>
+          </Card>
         </motion.div>
       )}
 
@@ -333,10 +460,14 @@ export default function Home() {
             </div>
             <Icon name="chevronRight" size={20} />
           </Card>
+          <p className="health-explainer">
+            Improves as you add appliances, track warranties, and complete
+            tasks.
+          </p>
         </motion.div>
       )}
 
-      {!showHealthScore && (
+      {!showHealthScore && !showWelcomeCard && (
         <motion.div
           initial={reduce ? false : { opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
@@ -359,6 +490,10 @@ export default function Home() {
             </div>
             <Icon name="chevronRight" size={20} />
           </Card>
+          <p className="health-explainer">
+            Home Health goes up as you add appliances, track warranties, and
+            complete tasks.
+          </p>
         </motion.div>
       )}
 
@@ -404,7 +539,7 @@ export default function Home() {
         </motion.div>
       )}
 
-      {state === 'empty' && !showSuggestions && (
+      {state === 'empty' && !showSuggestions && !showWelcomeCard && (
         <motion.div
           key="empty"
           initial={{ opacity: 0, y: 12 }}
@@ -421,7 +556,7 @@ export default function Home() {
         </motion.div>
       )}
 
-      {state === 'empty' && showSuggestions && (
+      {state === 'empty' && showSuggestions && !showWelcomeCard && (
         <motion.div
           key="suggestions"
           initial={reduce ? false : { opacity: 0, y: 12 }}
@@ -547,7 +682,7 @@ export default function Home() {
           </div>
           <div className="appliance-scroll">
             {appliances.map((a) => (
-              <ApplianceCard key={a.id} appliance={a} />
+              <ApplianceCard key={a.id} appliance={a} tasks={tasks} />
             ))}
           </div>
         </motion.div>
