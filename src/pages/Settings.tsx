@@ -85,6 +85,14 @@ export default function Settings() {
       value: APP_VERSION,
     },
     {
+      icon: 'refreshCw',
+      label: 'Replay feature tour',
+      onClick: () => {
+        localStorage.removeItem('hearth.tour.seen.v1');
+        navigate('/');
+      },
+    },
+    {
       icon: 'mail',
       label: 'Send feedback',
       onClick: () => {

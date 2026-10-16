@@ -49,7 +49,7 @@ const EMPTY_COPY: Record<HelpLevel, { body: string; cta: string }> = {
     cta: 'Add your first task',
   },
   detailed: {
-    body: 'Add your first task. We\u2019ll track what needs doing, when it\u2019s due, and remind you before it matters.',
+    body: 'Add your first task. We\'ll track what needs doing, when it\'s due, and remind you before it matters.',
     cta: 'Add your first task',
   },
 };
@@ -221,6 +221,8 @@ export default function Home() {
   const [toastVisible, setToastVisible] = useState(false);
   const [welcomeDismissed, setWelcomeDismissed] = useState(true);
   const [tourSeen, setTourSeen] = useState(true);
+  const [showAllTasks, setShowAllTasks] = useState(false);
+  const [showAllAppliances, setShowAllAppliances] = useState(false);
 
   useEffect(() => {
     setWelcomeDismissed(Boolean(localStorage.getItem(WELCOME_KEY)));
@@ -415,14 +417,12 @@ export default function Home() {
       : [];
   const showMonthlyFocus = monthlyFocus.length > 0 && !showWelcomeCard;
 
-  // Seasonal checklist — show if user has fewer than 3 open tasks (they need direction)
   const seasonalTasks =
     openCount < 3 && state !== 'loading'
       ? getSeasonalChecklist(property?.climate_zone)
       : [];
   const showSeasonal = seasonalTasks.length > 0 && !showWelcomeCard;
 
-  // Warranty vault card — show if any appliance has warranty info
   const showWarrantyVault =
     appliances.length > 0 && hasAnyWarrantyDocs(appliances);
 
@@ -776,14 +776,32 @@ export default function Home() {
           </Card>
 
           <div className="section">
-            <h2 className="section-title">Upcoming Tasks</h2>
+            <div className="section-header-row">
+              <h2 className="section-title">Upcoming Tasks</h2>
+              {tasks.length > 10 && !showAllTasks && (
+                <button
+                  className="section-action"
+                  onClick={() => setShowAllTasks(true)}
+                >
+                  See all tasks
+                </button>
+              )}
+              {tasks.length > 10 && showAllTasks && (
+                <button
+                  className="section-action"
+                  onClick={() => setShowAllTasks(false)}
+                >
+                  Show less
+                </button>
+              )}
+            </div>
             <Card>
               <motion.div
                 variants={listContainer}
                 initial="hidden"
                 animate="show"
               >
-                {tasks.map((task) => (
+                {(showAllTasks ? tasks : tasks.slice(0, 10)).map((task) => (
                   <motion.div key={task.id} variants={listItem}>
                     <TaskRow
                       id={task.id}
@@ -870,17 +888,29 @@ export default function Home() {
             <h2 className="section-title" style={{ marginBottom: 0 }}>
               My Appliances
             </h2>
-            <button
-              className="section-action"
-              onClick={() => navigate('/appliances')}
-            >
-              See all
-            </button>
+            {appliances.length > 8 && !showAllAppliances && (
+              <button
+                className="section-action"
+                onClick={() => setShowAllAppliances(true)}
+              >
+                See all
+              </button>
+            )}
+            {appliances.length > 8 && showAllAppliances && (
+              <button
+                className="section-action"
+                onClick={() => setShowAllAppliances(false)}
+              >
+                Show less
+              </button>
+            )}
           </div>
           <div className="appliance-scroll">
-            {appliances.map((a) => (
-              <ApplianceCard key={a.id} appliance={a} tasks={tasks} />
-            ))}
+            {(showAllAppliances ? appliances : appliances.slice(0, 8)).map(
+              (a) => (
+                <ApplianceCard key={a.id} appliance={a} tasks={tasks} />
+              )
+            )}
           </div>
         </motion.div>
       )}
