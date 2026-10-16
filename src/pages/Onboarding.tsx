@@ -11,6 +11,7 @@ import { supabase } from '../lib/supabase';
 import { easings } from '../lib/motion';
 import { ApplianceCategory, CATEGORY_LABELS } from '../lib/types';
 import { CATEGORY_ICONS } from '../lib/icons';
+import { getOnboardingPresets } from '../lib/suggestions';
 
 type Step = 'welcome' | 'name' | 'terms' | 'home' | 'appliance' | 'done';
 
@@ -38,6 +39,12 @@ const CATEGORIES: ApplianceCategory[] = [
   'appliance',
   'other',
 ];
+
+function addDays(dateStr: string, days: number): string {
+  const d = new Date(dateStr + 'T00:00:00');
+  d.setDate(d.getDate() + days);
+  return d.toISOString().split('T')[0];
+}
 
 export default function Onboarding() {
   const navigate = useNavigate();
@@ -89,10 +96,12 @@ export default function Onboarding() {
 
   const handleSaveHome = async () => {
     if (!user) return;
+
     if (!homeNickname.trim()) {
       goNext();
       return;
     }
+
     setBusy(true);
     const { error: err } = await supabase.from('properties').insert({
       user_id: user.id,
@@ -101,6 +110,7 @@ export default function Onboarding() {
       home_type: 'house',
     });
     setBusy(false);
+
     if (err) {
       setError(err.message);
       return;
@@ -110,24 +120,50 @@ export default function Onboarding() {
 
   const handleSaveAppliance = async () => {
     if (!user) return;
+
     if (!applianceName.trim()) {
       goNext();
       return;
     }
+
     setBusy(true);
-    const { error: err } = await supabase.from('appliances').insert({
-      user_id: user.id,
-      name: applianceName.trim(),
-      category: applianceCategory,
-      make: applianceMake.trim() || null,
-      model: applianceModel.trim() || null,
-      warranty_expires_at: warrantyExpiry || null,
-    });
-    setBusy(false);
-    if (err) {
-      setError(err.message);
+
+    const { data: inserted, error: err } = await supabase
+      .from('appliances')
+      .insert({
+        user_id: user.id,
+        name: applianceName.trim(),
+        category: applianceCategory,
+        make: applianceMake.trim() || null,
+        model: applianceModel.trim() || null,
+        warranty_expires_at: warrantyExpiry || null,
+      })
+      .select()
+      .single();
+
+    if (err || !inserted) {
+      setBusy(false);
+      setError(err?.message ?? 'Could not save appliance.');
       return;
     }
+
+    // Auto-create preset tasks for this appliance type
+    const presets = getOnboardingPresets(applianceCategory);
+    if (presets.length > 0) {
+      const today = new Date().toISOString().split('T')[0];
+      const taskRows = presets.map((p) => ({
+        user_id: user.id,
+        title: p.title,
+        appliance_id: inserted.id,
+        appliance: inserted.name,
+        due_date: addDays(today, p.dueInDays),
+        repeat: p.repeat,
+        status: 'due',
+      }));
+      await supabase.from('tasks').insert(taskRows);
+    }
+
+    setBusy(false);
     goNext();
   };
 
@@ -336,7 +372,7 @@ export default function Onboarding() {
       <div className="wizard-header">
         <h1 className="wizard-title">Add your first appliance</h1>
         <p className="wizard-subtitle">
-          This is what lets Hearth remind you about maintenance and warranties.
+          We'll set up its first reminder for you automatically.
         </p>
       </div>
 
@@ -405,7 +441,7 @@ export default function Onboarding() {
       <div className="wizard-actions">
         <Button onClick={handleSaveAppliance} disabled={busy}>
           {busy
-            ? 'Saving...'
+            ? 'Setting up...'
             : applianceName.trim()
             ? 'Add appliance'
             : 'Skip for now'}
@@ -457,8 +493,7 @@ export default function Onboarding() {
         You're all set{firstName.trim() ? `, ${firstName.trim()}` : ''}
       </h1>
       <p className="wizard-subtitle">
-        Hearth is ready. Add tasks as they come up — or just let the reminders
-        find you.
+        Hearth is ready. Your first task is already waiting for you.
       </p>
 
       <div className="wizard-actions">

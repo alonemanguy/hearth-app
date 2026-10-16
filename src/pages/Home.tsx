@@ -25,6 +25,7 @@ import {
   Suggestion,
   getSuggestionsForCategory,
   getCommonApplianceSuggestions,
+  getMonthlyFocus,
 } from '../lib/suggestions';
 
 type ViewState = 'loading' | 'error' | 'empty' | 'populated';
@@ -317,6 +318,10 @@ export default function Home() {
     await fetchAll();
   };
 
+  const handleMonthlyFocus = async (focus: { linkTo: string }) => {
+    navigate(focus.linkTo);
+  };
+
   const openCount = tasks.filter((t) => t.status !== 'done').length;
   const activeCount = openCount;
   const emptyCopy = EMPTY_COPY[helpLevel];
@@ -364,6 +369,13 @@ export default function Home() {
     appliances.length < 3 &&
     commonAppliances.length > 0;
 
+  // Monthly focus — only when we have something to focus on
+  const monthlyFocus =
+    state !== 'loading' && appliances.length > 0
+      ? getMonthlyFocus(appliances, tasks)
+      : [];
+  const showMonthlyFocus = monthlyFocus.length > 0 && !showWelcomeCard;
+
   return (
     <Screen>
       <Header
@@ -400,9 +412,7 @@ export default function Home() {
             >
               <Icon name="close" size={16} />
             </button>
-            <div className="home-welcome-title">
-              Hearth gets useful fast
-            </div>
+            <div className="home-welcome-title">Hearth gets useful fast</div>
             <div className="home-welcome-sub">
               Start with one of these — takes less than a minute.
             </div>
@@ -442,6 +452,46 @@ export default function Home() {
               </button>
             </div>
           </Card>
+        </motion.div>
+      )}
+
+      {/* This month — smart prioritized focus */}
+      {showMonthlyFocus && (
+        <motion.div
+          initial={reduce ? false : { opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, ease: easings.easeOutExpo }}
+          className="section"
+        >
+          <h2 className="section-title">This month</h2>
+          <div className="monthly-focus-list">
+            {monthlyFocus.map((focus, i) => (
+              <motion.div
+                key={focus.id}
+                initial={reduce ? false : { opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{
+                  duration: 0.35,
+                  ease: easings.easeOutExpo,
+                  delay: reduce ? 0 : i * 0.06,
+                }}
+              >
+                <Card
+                  className={`monthly-focus-card monthly-focus-card--${focus.tone}`}
+                  onClick={() => handleMonthlyFocus(focus)}
+                >
+                  <div className="monthly-focus-icon">
+                    <Icon name={focus.icon} size={20} />
+                  </div>
+                  <div className="monthly-focus-content">
+                    <div className="monthly-focus-title">{focus.title}</div>
+                    <div className="monthly-focus-body">{focus.body}</div>
+                  </div>
+                  <Icon name="chevronRight" size={20} />
+                </Card>
+              </motion.div>
+            ))}
+          </div>
         </motion.div>
       )}
 

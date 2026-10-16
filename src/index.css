@@ -895,6 +895,74 @@ svg { display: block; flex-shrink: 0; }
   line-height: 1.4;
 }
 
+/* --- Home: monthly focus --- */
+.monthly-focus-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.monthly-focus-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  cursor: pointer;
+  padding: var(--space-3) var(--space-4);
+  border-left-width: 3px;
+  border-left-style: solid;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+.monthly-focus-card:hover {
+  transform: translateY(-1px);
+}
+.monthly-focus-card:active {
+  transform: scale(0.99);
+}
+.monthly-focus-card--error {
+  border-left-color: var(--color-error);
+  background: rgba(179, 38, 30, 0.03);
+}
+.monthly-focus-card--error .monthly-focus-icon {
+  background: #FFEBEE;
+  color: var(--color-error);
+}
+.monthly-focus-card--warning {
+  border-left-color: var(--color-accent);
+  background: rgba(201, 162, 39, 0.04);
+}
+.monthly-focus-card--warning .monthly-focus-icon {
+  background: #FFF8E1;
+  color: #96751A;
+}
+.monthly-focus-card--info {
+  border-left-color: var(--color-primary);
+  background: rgba(31, 77, 58, 0.03);
+}
+.monthly-focus-card--info .monthly-focus-icon {
+  background: rgba(31, 77, 58, 0.08);
+  color: var(--color-primary);
+}
+.monthly-focus-icon {
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+.monthly-focus-content { flex: 1; min-width: 0; }
+.monthly-focus-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+.monthly-focus-body {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+  line-height: 1.4;
+}
+
 /* --- Home: welcome card --- */
 .home-welcome {
   position: relative;
@@ -2392,7 +2460,7 @@ svg { display: block; flex-shrink: 0; }
 .welcome-footer-links button:hover { color: var(--color-primary); }
 .welcome-footer-copy { font-size: 13px; color: var(--color-text-muted); }
 
-/* --- Attachments (Batch 6) --- */
+/* --- Attachments --- */
 .attachments-empty {
   display: flex;
   align-items: center;
@@ -2430,7 +2498,6 @@ svg { display: block; flex-shrink: 0; }
   margin-top: 2px;
   line-height: 1.4;
 }
-
 .attachment-card {
   display: flex;
   align-items: center;
@@ -2501,4 +2568,72 @@ svg { display: block; flex-shrink: 0; }
 .attachment-delete:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+}
+
+/* --- Monthly focus --- */
+.monthly-focus-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.monthly-focus-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  cursor: pointer;
+  padding: var(--space-3) var(--space-4);
+  border-left-width: 3px;
+  border-left-style: solid;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+.monthly-focus-card:hover {
+  transform: translateY(-1px);
+}
+.monthly-focus-card:active {
+  transform: scale(0.99);
+}
+.monthly-focus-card--error {
+  border-left-color: var(--color-error);
+  background: rgba(179, 38, 30, 0.03);
+}
+.monthly-focus-card--error .monthly-focus-icon {
+  background: #FFEBEE;
+  color: var(--color-error);
+}
+.monthly-focus-card--warning {
+  border-left-color: var(--color-accent);
+  background: rgba(201, 162, 39, 0.04);
+}
+.monthly-focus-card--warning .monthly-focus-icon {
+  background: #FFF8E1;
+  color: #96751A;
+}
+.monthly-focus-card--info {
+  border-left-color: var(--color-primary);
+  background: rgba(31, 77, 58, 0.03);
+}
+.monthly-focus-card--info .monthly-focus-icon {
+  background: rgba(31, 77, 58, 0.08);
+  color: var(--color-primary);
+}
+.monthly-focus-icon {
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+.monthly-focus-content { flex: 1; min-width: 0; }
+.monthly-focus-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+.monthly-focus-body {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+  line-height: 1.4;
 }
