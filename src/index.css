@@ -638,6 +638,178 @@ svg { display: block; flex-shrink: 0; }
 .warranty-card-days--error { color: #B3261E; }
 .warranty-card-days--neutral { color: var(--color-text-muted); }
 
+/* --- Warranty vault card --- */
+.warranty-vault-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  cursor: pointer;
+  padding: var(--space-4);
+  background: linear-gradient(
+    135deg,
+    rgba(201, 162, 39, 0.06) 0%,
+    rgba(31, 77, 58, 0.03) 100%
+  );
+  border: 1px solid rgba(201, 162, 39, 0.2);
+}
+.warranty-vault-icon {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(201, 162, 39, 0.15);
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+  color: #96751A;
+}
+.warranty-vault-content { flex: 1; min-width: 0; }
+.warranty-vault-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-text);
+  letter-spacing: -0.01em;
+}
+.warranty-vault-body {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+  line-height: 1.4;
+}
+
+/* --- Seasonal checklist --- */
+.seasonal-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.seasonal-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  cursor: pointer;
+  padding: var(--space-3) var(--space-4);
+  transition: transform 0.15s ease, border-color 0.2s ease;
+}
+.seasonal-card:hover {
+  border-color: var(--color-primary);
+}
+.seasonal-card:active {
+  transform: scale(0.98);
+}
+.seasonal-icon {
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(31, 77, 58, 0.08);
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+  color: var(--color-primary);
+}
+.seasonal-info { flex: 1; min-width: 0; }
+.seasonal-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+.seasonal-reason {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+  line-height: 1.4;
+}
+
+/* --- Feature tour --- */
+.tour-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 400;
+  padding: var(--space-4);
+}
+.tour-card {
+  position: relative;
+  background: var(--color-background);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  max-width: 360px;
+  width: 100%;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.tour-skip {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 6px 10px;
+  font-family: var(--font-family);
+}
+.tour-skip:hover {
+  color: var(--color-text);
+}
+.tour-slide {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-3);
+  min-height: 200px;
+  justify-content: center;
+}
+.tour-icon {
+  width: 76px;
+  height: 76px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(31, 77, 58, 0.08);
+  border-radius: var(--radius-lg);
+  color: var(--color-primary);
+  margin-bottom: var(--space-2);
+}
+.tour-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color-text);
+  letter-spacing: -0.02em;
+}
+.tour-body {
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--color-text-muted);
+  max-width: 280px;
+}
+.tour-dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+.tour-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-border);
+  transition: background 0.2s ease, width 0.2s ease;
+}
+.tour-dot--active {
+  background: var(--color-primary);
+  width: 24px;
+  border-radius: var(--radius-pill);
+}
+
 /* --- Household --- */
 .household-hero {
   display: flex;
@@ -895,7 +1067,7 @@ svg { display: block; flex-shrink: 0; }
   line-height: 1.4;
 }
 
-/* --- Home: monthly focus --- */
+/* --- Monthly focus --- */
 .monthly-focus-list {
   display: flex;
   flex-direction: column;
@@ -1152,7 +1324,6 @@ svg { display: block; flex-shrink: 0; }
   box-shadow: 0 8px 32px rgba(46, 125, 50, 0.25);
 }
 
-/* --- Onboarding: details section header --- */
 .details-section-header {
   display: flex;
   flex-direction: column;
@@ -1457,13 +1628,11 @@ svg { display: block; flex-shrink: 0; }
     border-color 0.2s ease,
     box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
-
 .input-group input::placeholder,
 .input-group textarea::placeholder {
   color: rgba(89, 89, 89, 0.45);
   font-style: italic;
 }
-
 .input-group input:focus,
 .input-group select:focus,
 .input-group textarea:focus {
@@ -1505,14 +1674,12 @@ svg { display: block; flex-shrink: 0; }
   font-weight: 600;
 }
 .input-group textarea { resize: vertical; min-height: 100px; }
-
 .input-hint {
   font-size: 14px;
   color: var(--color-text-muted);
   margin-top: var(--space-2);
   line-height: 1.45;
 }
-
 .input-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -2318,9 +2485,7 @@ svg { display: block; flex-shrink: 0; }
   opacity: 0.5;
   cursor: not-allowed;
 }
-.oauth-btn > svg {
-  flex-shrink: 0;
-}
+.oauth-btn > svg { flex-shrink: 0; }
 .auth-divider {
   display: flex;
   align-items: center;
@@ -2568,72 +2733,4 @@ svg { display: block; flex-shrink: 0; }
 .attachment-delete:disabled {
   opacity: 0.4;
   cursor: not-allowed;
-}
-
-/* --- Monthly focus --- */
-.monthly-focus-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-.monthly-focus-card {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  cursor: pointer;
-  padding: var(--space-3) var(--space-4);
-  border-left-width: 3px;
-  border-left-style: solid;
-  transition: transform 0.15s ease, border-color 0.15s ease;
-}
-.monthly-focus-card:hover {
-  transform: translateY(-1px);
-}
-.monthly-focus-card:active {
-  transform: scale(0.99);
-}
-.monthly-focus-card--error {
-  border-left-color: var(--color-error);
-  background: rgba(179, 38, 30, 0.03);
-}
-.monthly-focus-card--error .monthly-focus-icon {
-  background: #FFEBEE;
-  color: var(--color-error);
-}
-.monthly-focus-card--warning {
-  border-left-color: var(--color-accent);
-  background: rgba(201, 162, 39, 0.04);
-}
-.monthly-focus-card--warning .monthly-focus-icon {
-  background: #FFF8E1;
-  color: #96751A;
-}
-.monthly-focus-card--info {
-  border-left-color: var(--color-primary);
-  background: rgba(31, 77, 58, 0.03);
-}
-.monthly-focus-card--info .monthly-focus-icon {
-  background: rgba(31, 77, 58, 0.08);
-  color: var(--color-primary);
-}
-.monthly-focus-icon {
-  width: 42px;
-  height: 42px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-sm);
-  flex-shrink: 0;
-}
-.monthly-focus-content { flex: 1; min-width: 0; }
-.monthly-focus-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--color-text);
-}
-.monthly-focus-body {
-  font-size: 13px;
-  color: var(--color-text-muted);
-  margin-top: 2px;
-  line-height: 1.4;
 }

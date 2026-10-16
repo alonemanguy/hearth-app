@@ -11,6 +11,7 @@ import Toast from '../components/Toast';
 import NotificationBell from '../components/NotificationBell';
 import OverdueBanner from '../components/OverdueBanner';
 import ScoreRing, { scoreColor } from '../components/ScoreRing';
+import FeatureTour from '../components/FeatureTour';
 import { supabase } from '../lib/supabase';
 import { useAuth, HelpLevel } from '../lib/auth';
 import { easings } from '../lib/motion';
@@ -23,14 +24,20 @@ import {
 import { computeHealthReport } from '../lib/health';
 import {
   Suggestion,
+  SeasonalTask,
   getSuggestionsForCategory,
   getCommonApplianceSuggestions,
   getMonthlyFocus,
+  getSeasonalChecklist,
+  hasAnyWarrantyDocs,
+  getSeason,
+  seasonLabel,
 } from '../lib/suggestions';
 
 type ViewState = 'loading' | 'error' | 'empty' | 'populated';
 
 const WELCOME_KEY = 'hearth.welcome.dismissed.v1';
+const TOUR_KEY = 'hearth.tour.seen.v1';
 
 const EMPTY_COPY: Record<HelpLevel, { body: string; cta: string }> = {
   basic: {
@@ -209,12 +216,15 @@ export default function Home() {
   const [notificationCount, setNotificationCount] = useState(0);
   const [overdueCount, setOverdueCount] = useState(0);
   const [addingSuggestion, setAddingSuggestion] = useState<string | null>(null);
+  const [addingSeasonal, setAddingSeasonal] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState('');
   const [toastVisible, setToastVisible] = useState(false);
   const [welcomeDismissed, setWelcomeDismissed] = useState(true);
+  const [tourSeen, setTourSeen] = useState(true);
 
   useEffect(() => {
     setWelcomeDismissed(Boolean(localStorage.getItem(WELCOME_KEY)));
+    setTourSeen(Boolean(localStorage.getItem(TOUR_KEY)));
   }, []);
 
   useEffect(() => {
@@ -284,6 +294,11 @@ export default function Home() {
     setWelcomeDismissed(true);
   };
 
+  const dismissTour = () => {
+    localStorage.setItem(TOUR_KEY, '1');
+    setTourSeen(true);
+  };
+
   const handleAddSuggestion = async (
     suggestion: Suggestion,
     appliance: Appliance
@@ -318,8 +333,32 @@ export default function Home() {
     await fetchAll();
   };
 
-  const handleMonthlyFocus = async (focus: { linkTo: string }) => {
-    navigate(focus.linkTo);
+  const handleAddSeasonal = async (s: SeasonalTask) => {
+    if (!user) return;
+    if (addingSeasonal) return;
+    setAddingSeasonal(s.id);
+
+    const today = new Date().toISOString().split('T')[0];
+    const dueDate = addDays(today, 7);
+
+    const { error } = await supabase.from('tasks').insert({
+      user_id: user.id,
+      title: s.title,
+      due_date: dueDate,
+      repeat: s.repeat,
+      status: 'due',
+    });
+
+    setAddingSeasonal(null);
+
+    if (error) {
+      console.error('Error adding seasonal task:', error);
+      showToast('Could not add task');
+      return;
+    }
+
+    showToast('Added to your tasks');
+    await fetchAll();
   };
 
   const openCount = tasks.filter((t) => t.status !== 'done').length;
@@ -362,6 +401,7 @@ export default function Home() {
 
   const isFresh = dataPoints < 2;
   const showWelcomeCard = !welcomeDismissed && isFresh && state !== 'loading';
+  const showTour = !tourSeen && state !== 'loading' && !showWelcomeCard;
 
   const commonAppliances = getCommonApplianceSuggestions(appliances);
   const showApplianceSuggestions =
@@ -369,12 +409,24 @@ export default function Home() {
     appliances.length < 3 &&
     commonAppliances.length > 0;
 
-  // Monthly focus — only when we have something to focus on
   const monthlyFocus =
     state !== 'loading' && appliances.length > 0
       ? getMonthlyFocus(appliances, tasks)
       : [];
   const showMonthlyFocus = monthlyFocus.length > 0 && !showWelcomeCard;
+
+  // Seasonal checklist — show if user has fewer than 3 open tasks (they need direction)
+  const seasonalTasks =
+    openCount < 3 && state !== 'loading'
+      ? getSeasonalChecklist(property?.climate_zone)
+      : [];
+  const showSeasonal = seasonalTasks.length > 0 && !showWelcomeCard;
+
+  // Warranty vault card — show if any appliance has warranty info
+  const showWarrantyVault =
+    appliances.length > 0 && hasAnyWarrantyDocs(appliances);
+
+  const currentSeason = getSeason();
 
   return (
     <Screen>
@@ -382,6 +434,8 @@ export default function Home() {
         title={greeting}
         right={<NotificationBell count={notificationCount} />}
       />
+
+      {showTour && <FeatureTour onDone={dismissTour} />}
 
       {overdueCount > 0 && <OverdueBanner count={overdueCount} />}
 
@@ -455,7 +509,6 @@ export default function Home() {
         </motion.div>
       )}
 
-      {/* This month — smart prioritized focus */}
       {showMonthlyFocus && (
         <motion.div
           initial={reduce ? false : { opacity: 0, y: 10 }}
@@ -478,7 +531,7 @@ export default function Home() {
               >
                 <Card
                   className={`monthly-focus-card monthly-focus-card--${focus.tone}`}
-                  onClick={() => handleMonthlyFocus(focus)}
+                  onClick={() => navigate(focus.linkTo)}
                 >
                   <div className="monthly-focus-icon">
                     <Icon name={focus.icon} size={20} />
@@ -488,6 +541,89 @@ export default function Home() {
                     <div className="monthly-focus-body">{focus.body}</div>
                   </div>
                   <Icon name="chevronRight" size={20} />
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+      )}
+
+      {showWarrantyVault && (
+        <motion.div
+          initial={reduce ? false : { opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{
+            duration: 0.45,
+            ease: easings.easeOutExpo,
+            delay: reduce ? 0 : 0.05,
+          }}
+          className="section"
+        >
+          <Card
+            className="warranty-vault-card"
+            onClick={() => navigate('/warranties')}
+          >
+            <div className="warranty-vault-icon">
+              <Icon name="warranty" size={22} />
+            </div>
+            <div className="warranty-vault-content">
+              <div className="warranty-vault-title">Warranty vault</div>
+              <div className="warranty-vault-body">
+                Track coverage and store warranty PDFs for each appliance.
+              </div>
+            </div>
+            <Icon name="chevronRight" size={20} />
+          </Card>
+        </motion.div>
+      )}
+
+      {showSeasonal && (
+        <motion.div
+          initial={reduce ? false : { opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{
+            duration: 0.45,
+            ease: easings.easeOutExpo,
+            delay: reduce ? 0 : 0.08,
+          }}
+          className="section"
+        >
+          <h2 className="section-title">
+            {seasonLabel(currentSeason)} checklist
+          </h2>
+          <p className="section-sub">
+            Things homes usually need this season. Tap to add.
+          </p>
+          <div className="seasonal-list">
+            {seasonalTasks.map((s, i) => (
+              <motion.div
+                key={s.id}
+                initial={reduce ? false : { opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{
+                  duration: 0.35,
+                  ease: easings.easeOutExpo,
+                  delay: reduce ? 0 : i * 0.05,
+                }}
+              >
+                <Card
+                  className="seasonal-card"
+                  onClick={() => handleAddSeasonal(s)}
+                  style={{
+                    opacity: addingSeasonal === s.id ? 0.5 : 1,
+                    pointerEvents: addingSeasonal ? 'none' : 'auto',
+                  }}
+                >
+                  <div className="seasonal-icon">
+                    <Icon name={s.icon} size={20} />
+                  </div>
+                  <div className="seasonal-info">
+                    <div className="seasonal-title">{s.title}</div>
+                    <div className="seasonal-reason">{s.reason}</div>
+                  </div>
+                  <div className="suggestion-add">
+                    <Icon name="add" size={16} strokeWidth={2.4} />
+                  </div>
                 </Card>
               </motion.div>
             ))}
@@ -607,22 +743,25 @@ export default function Home() {
         </motion.div>
       )}
 
-      {state === 'empty' && !showWelcomeCard && appliances.length === 0 && (
-        <motion.div
-          key="empty"
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, ease: easings.easeOutExpo }}
-        >
-          <EmptyState
-            icon="home"
-            title="No tasks yet"
-            body={emptyCopy.body}
-            ctaLabel={emptyCopy.cta}
-            onCta={() => navigate('/add')}
-          />
-        </motion.div>
-      )}
+      {state === 'empty' &&
+        !showWelcomeCard &&
+        !showSeasonal &&
+        appliances.length === 0 && (
+          <motion.div
+            key="empty"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: easings.easeOutExpo }}
+          >
+            <EmptyState
+              icon="home"
+              title="No tasks yet"
+              body={emptyCopy.body}
+              ctaLabel={emptyCopy.cta}
+              onCta={() => navigate('/add')}
+            />
+          </motion.div>
+        )}
 
       {state === 'populated' && (
         <motion.div
@@ -664,7 +803,7 @@ export default function Home() {
         </motion.div>
       )}
 
-      {suggestions.length > 0 && !showWelcomeCard && (
+      {suggestions.length > 0 && !showWelcomeCard && !showSeasonal && (
         <motion.div
           className="section"
           key="suggestions"

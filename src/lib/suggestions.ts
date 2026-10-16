@@ -25,6 +25,14 @@ export type MonthlyFocus = {
   tone: 'error' | 'warning' | 'info';
 };
 
+export type SeasonalTask = {
+  id: string;
+  title: string;
+  reason: string;
+  repeat: 'once' | 'yearly';
+  icon: IconName;
+};
+
 const COMMON_APPLIANCES: CommonAppliance[] = [
   { key: 'hvac', label: 'HVAC system', category: 'hvac' },
   { key: 'water-heater', label: 'Water heater', category: 'plumbing' },
@@ -145,17 +153,19 @@ export function getSuggestionsForCategory(
   }
 }
 
-/**
- * When a user adds an appliance during onboarding,
- * return 1-2 presets to auto-create as tasks.
- */
 export function getOnboardingPresets(
   category: ApplianceCategory
 ): Suggestion[] {
   return getSuggestionsForCategory(category).slice(0, 1);
 }
 
-function getSeason(): 'spring' | 'summer' | 'fall' | 'winter' {
+/* ------------------------------------------------------------------ */
+/* Season detection                                                    */
+/* ------------------------------------------------------------------ */
+
+export type Season = 'spring' | 'summer' | 'fall' | 'winter';
+
+export function getSeason(): Season {
   const month = new Date().getMonth(); // 0-11
   if (month >= 2 && month <= 4) return 'spring';
   if (month >= 5 && month <= 7) return 'summer';
@@ -163,11 +173,192 @@ function getSeason(): 'spring' | 'summer' | 'fall' | 'winter' {
   return 'winter';
 }
 
-function seasonalSuggestion(season: string): MonthlyFocus | null {
+export function seasonLabel(s: Season): string {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+/* ------------------------------------------------------------------ */
+/* Seasonal checklists — real things homes need each season            */
+/* ------------------------------------------------------------------ */
+
+const SEASONAL_TASKS: Record<Season, SeasonalTask[]> = {
+  spring: [
+    {
+      id: 'spring-roof',
+      title: 'Inspect roof for winter damage',
+      reason: 'Freeze-thaw cycles crack shingles and flashing.',
+      repeat: 'yearly',
+      icon: 'wrench',
+    },
+    {
+      id: 'spring-gutters',
+      title: 'Clean out gutters',
+      reason: 'Winter debris blocks drainage and causes leaks.',
+      repeat: 'yearly',
+      icon: 'plumbing',
+    },
+    {
+      id: 'spring-ac',
+      title: 'Service AC before summer',
+      reason: 'Catch refrigerant and airflow issues early.',
+      repeat: 'yearly',
+      icon: 'hvac',
+    },
+    {
+      id: 'spring-exterior',
+      title: 'Check exterior paint and caulk',
+      reason: 'Small cracks let in moisture and pests.',
+      repeat: 'yearly',
+      icon: 'home',
+    },
+    {
+      id: 'spring-irrigation',
+      title: 'Test irrigation system',
+      reason: 'Broken sprinkler heads waste water.',
+      repeat: 'yearly',
+      icon: 'plumbing',
+    },
+  ],
+  summer: [
+    {
+      id: 'summer-ac',
+      title: 'Check AC efficiency and filter',
+      reason: 'Peak usage — small issues become big bills.',
+      repeat: 'yearly',
+      icon: 'hvac',
+    },
+    {
+      id: 'summer-deck',
+      title: 'Inspect deck and fence',
+      reason: 'Sun and heat warp wood. Catch rot early.',
+      repeat: 'yearly',
+      icon: 'wrench',
+    },
+    {
+      id: 'summer-dryer',
+      title: 'Clean dryer vent',
+      reason: 'Lint buildup is a top cause of house fires.',
+      repeat: 'yearly',
+      icon: 'appliance',
+    },
+    {
+      id: 'summer-pests',
+      title: 'Check for pest entry points',
+      reason: 'Summer is peak season for insects and rodents.',
+      repeat: 'yearly',
+      icon: 'wrench',
+    },
+    {
+      id: 'summer-smoke',
+      title: 'Test smoke and CO detectors',
+      reason: 'Recommended monthly, extra important in summer.',
+      repeat: 'yearly',
+      icon: 'electrical',
+    },
+  ],
+  fall: [
+    {
+      id: 'fall-gutters',
+      title: 'Clean gutters after leaves fall',
+      reason: 'Clogged gutters cause ice dams in winter.',
+      repeat: 'yearly',
+      icon: 'plumbing',
+    },
+    {
+      id: 'fall-faucets',
+      title: 'Winterize outdoor faucets',
+      reason: 'Trapped water freezes and bursts pipes.',
+      repeat: 'yearly',
+      icon: 'plumbing',
+    },
+    {
+      id: 'fall-heating',
+      title: 'Service heating system',
+      reason: 'Before first cold snap — avoid a cold night.',
+      repeat: 'yearly',
+      icon: 'hvac',
+    },
+    {
+      id: 'fall-chimney',
+      title: 'Inspect chimney and fireplace',
+      reason: 'Creosote buildup causes chimney fires.',
+      repeat: 'yearly',
+      icon: 'wrench',
+    },
+    {
+      id: 'fall-seal',
+      title: 'Seal gaps around windows and doors',
+      reason: 'Keeps heat in and lowers winter bills.',
+      repeat: 'yearly',
+      icon: 'home',
+    },
+  ],
+  winter: [
+    {
+      id: 'winter-pipes',
+      title: 'Insulate exposed pipes',
+      reason: 'Prevent burst pipes during hard freezes.',
+      repeat: 'yearly',
+      icon: 'plumbing',
+    },
+    {
+      id: 'winter-roof',
+      title: 'Watch for ice dams',
+      reason: 'Ice dams force water into walls and ceilings.',
+      repeat: 'yearly',
+      icon: 'wrench',
+    },
+    {
+      id: 'winter-heating',
+      title: 'Check heating system performance',
+      reason: 'Peak load — inefficiency shows up now.',
+      repeat: 'yearly',
+      icon: 'hvac',
+    },
+    {
+      id: 'winter-vents',
+      title: 'Keep exterior vents clear of snow',
+      reason: 'Blocked vents cause carbon monoxide buildup.',
+      repeat: 'yearly',
+      icon: 'wrench',
+    },
+    {
+      id: 'winter-detectors',
+      title: 'Test smoke and CO detectors',
+      reason: 'Extra important with closed windows and heating.',
+      repeat: 'yearly',
+      icon: 'electrical',
+    },
+  ],
+};
+
+export function getSeasonalChecklist(
+  _climateZone?: string | null
+): SeasonalTask[] {
+  // Future: use climate zone to pick different tasks
+  return SEASONAL_TASKS[getSeason()].slice(0, 4);
+}
+
+/* ------------------------------------------------------------------ */
+/* Warranty vault helper                                               */
+/* ------------------------------------------------------------------ */
+
+export function hasAnyWarrantyDocs(
+  appliances: Appliance[]
+): boolean {
+  // Heuristic: any appliance with warranty info is a candidate
+  return appliances.some((a) => Boolean(a.warranty_expires_at));
+}
+
+/* ------------------------------------------------------------------ */
+/* Monthly focus                                                       */
+/* ------------------------------------------------------------------ */
+
+function seasonalFocusSuggestion(season: Season): MonthlyFocus | null {
   switch (season) {
     case 'spring':
       return {
-        id: 'spring-hvac',
+        id: 'spring-focus',
         title: 'Spring HVAC tune-up',
         body: 'Before summer heat, get your AC checked.',
         linkTo: '/add',
@@ -176,7 +367,7 @@ function seasonalSuggestion(season: string): MonthlyFocus | null {
       };
     case 'summer':
       return {
-        id: 'summer-filter',
+        id: 'summer-focus',
         title: 'Check your HVAC filter',
         body: 'Peak usage season \u2014 filters clog faster.',
         linkTo: '/add',
@@ -185,7 +376,7 @@ function seasonalSuggestion(season: string): MonthlyFocus | null {
       };
     case 'fall':
       return {
-        id: 'fall-winterize',
+        id: 'fall-focus',
         title: 'Winterize your home',
         body: 'Protect pipes, check furnace, clean gutters.',
         linkTo: '/add',
@@ -194,7 +385,7 @@ function seasonalSuggestion(season: string): MonthlyFocus | null {
       };
     case 'winter':
       return {
-        id: 'winter-pipes',
+        id: 'winter-focus',
         title: 'Watch for frozen pipes',
         body: 'Keep cabinets open on cold nights.',
         linkTo: '/add',
@@ -206,10 +397,6 @@ function seasonalSuggestion(season: string): MonthlyFocus | null {
   }
 }
 
-/**
- * Compute the top 3 things a user should focus on right now.
- * Priority: overdue tasks > expiring warranties > season > suggested appliance tasks.
- */
 export function getMonthlyFocus(
   appliances: Appliance[],
   tasks: { id: string; title: string; due_date: string; status: string }[]
@@ -218,7 +405,6 @@ export function getMonthlyFocus(
   const now = new Date();
   now.setHours(0, 0, 0, 0);
 
-  // 1. Overdue tasks
   const overdue = tasks.filter(
     (t) => t.status !== 'done' && new Date(t.due_date).getTime() < now.getTime()
   );
@@ -233,7 +419,6 @@ export function getMonthlyFocus(
     });
   }
 
-  // 2. Warranty expiring soon
   const soon = new Date(now.getTime() + 30 * 86400000);
   const expiring = appliances.filter((a) => {
     if (!a.warranty_expires_at) return false;
@@ -253,13 +438,11 @@ export function getMonthlyFocus(
     });
   }
 
-  // 3. Seasonal suggestion
-  const seasonal = seasonalSuggestion(getSeason());
+  const seasonal = seasonalFocusSuggestion(getSeason());
   if (seasonal && focus.length < 3) {
     focus.push(seasonal);
   }
 
-  // 4. Fill remaining slots with appliance suggestions
   if (focus.length < 3 && appliances.length > 0) {
     for (const appliance of appliances) {
       if (focus.length >= 3) break;
