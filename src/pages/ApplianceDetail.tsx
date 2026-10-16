@@ -7,6 +7,7 @@ import Card from '../components/Card';
 import Button from '../components/Button';
 import Input from '../components/Input';
 import Skeleton from '../components/Skeleton';
+import AttachmentsSection from '../components/AttachmentsSection';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
 import { easings } from '../lib/motion';
@@ -390,6 +391,8 @@ export default function ApplianceDetail() {
             </Card>
           </div>
         )}
+
+        <AttachmentsSection applianceId={appliance.id} editable />
 
         <div className="action-buttons">
           <Button onClick={() => setEditing(true)}>

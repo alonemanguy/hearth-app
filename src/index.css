@@ -29,7 +29,6 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* Global focus ring — accessibility */
 *:focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
@@ -2392,3 +2391,114 @@ svg { display: block; flex-shrink: 0; }
 }
 .welcome-footer-links button:hover { color: var(--color-primary); }
 .welcome-footer-copy { font-size: 13px; color: var(--color-text-muted); }
+
+/* --- Attachments (Batch 6) --- */
+.attachments-empty {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  cursor: pointer;
+  padding: var(--space-4);
+  border: 1.5px dashed var(--color-border);
+  background: rgba(31, 77, 58, 0.02);
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.attachments-empty:hover {
+  border-color: var(--color-primary);
+  background: rgba(31, 77, 58, 0.04);
+}
+.attachments-empty-icon {
+  width: 46px;
+  height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(31, 77, 58, 0.08);
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+  color: var(--color-primary);
+}
+.attachments-empty-text { flex: 1; min-width: 0; }
+.attachments-empty-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+.attachments-empty-sub {
+  font-size: 14px;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+  line-height: 1.4;
+}
+
+.attachment-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0;
+  overflow: hidden;
+}
+.attachment-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-family);
+  text-align: left;
+  min-width: 0;
+}
+.attachment-main:hover {
+  background: rgba(31, 77, 58, 0.03);
+}
+.attachment-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(31, 77, 58, 0.08);
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+  color: var(--color-primary);
+}
+.attachment-info { flex: 1; min-width: 0; }
+.attachment-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.attachment-meta {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+.attachment-delete {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+  margin-right: 4px;
+  border-radius: var(--radius-sm);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.attachment-delete:hover {
+  background: rgba(179, 38, 30, 0.08);
+  color: var(--color-error);
+}
+.attachment-delete:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
