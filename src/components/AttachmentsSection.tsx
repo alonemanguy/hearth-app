@@ -29,6 +29,7 @@ export default function AttachmentsSection({
   const [loading, setLoading] = useState(true);
   const [files, setFiles] = useState<ApplianceFile[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<string>('');
   const [deleting, setDeleting] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState('');
   const [toastVisible, setToastVisible] = useState(false);
@@ -40,30 +41,45 @@ export default function AttachmentsSection({
   const load = async () => {
     setLoading(true);
     const list = await listApplianceFiles(applianceId);
+    console.log('[Attachments] loaded', list.length, 'files for', applianceId);
     setFiles(list);
     setLoading(false);
   };
 
   const showToast = (msg: string) => {
+    console.log('[Attachments] toast:', msg);
     setToastMessage(msg);
     setToastVisible(true);
   };
 
   const handlePick = () => {
+    console.log('[Attachments] pick clicked');
     inputRef.current?.click();
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = e.target.files?.[0];
+    console.log('[Attachments] onChange fired, file:', file?.name, file?.type, file?.size);
     e.target.value = '';
-    if (!file) return;
+    if (!file) {
+      console.log('[Attachments] no file selected');
+      return;
+    }
 
     setUploading(true);
+    setUploadProgress(`Uploading ${file.name}...`);
+
     const { file: uploaded, error } = await uploadApplianceFile(
       applianceId,
       file
     );
+
+    console.log('[Attachments] upload result:', { uploaded, error });
+
     setUploading(false);
+    setUploadProgress('');
 
     if (error || !uploaded) {
       showToast(error ?? 'Upload failed');
@@ -71,6 +87,8 @@ export default function AttachmentsSection({
     }
 
     showToast('File added');
+    // Small delay to let storage settle
+    await new Promise((r) => setTimeout(r, 300));
     await load();
   };
 
@@ -108,6 +126,7 @@ export default function AttachmentsSection({
         </h3>
         {editable && (
           <button
+            type="button"
             className="section-action"
             onClick={handlePick}
             disabled={uploading}
@@ -120,26 +139,37 @@ export default function AttachmentsSection({
       <input
         ref={inputRef}
         type="file"
-        accept="image/*,.pdf,application/pdf"
+        accept="image/*,application/pdf"
         onChange={handleFileChange}
         style={{ display: 'none' }}
       />
 
-      {loading && (
-        <Card>
-          <p className="input-hint">Loading files...</p>
+      {uploadProgress && (
+        <Card style={{ marginBottom: 8 }}>
+          <p className="input-hint" style={{ margin: 0 }}>
+            {uploadProgress}
+          </p>
         </Card>
       )}
 
-      {!loading && files.length === 0 && (
-        <Card className="attachments-empty" onClick={editable ? handlePick : undefined}>
+      {loading && (
+        <Card>
+          <p className="input-hint" style={{ margin: 0 }}>
+            Loading files...
+          </p>
+        </Card>
+      )}
+
+      {!loading && files.length === 0 && !uploading && (
+        <Card
+          className="attachments-empty"
+          onClick={editable ? handlePick : undefined}
+        >
           <div className="attachments-empty-icon">
             <Icon name="camera" size={24} />
           </div>
           <div className="attachments-empty-text">
-            <div className="attachments-empty-title">
-              No files yet
-            </div>
+            <div className="attachments-empty-title">No files yet</div>
             <div className="attachments-empty-sub">
               Add a photo of the nameplate, a warranty PDF, or a receipt.
             </div>
