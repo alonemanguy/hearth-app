@@ -37,7 +37,7 @@ export function EmptyState({ icon, title, body, ctaLabel, onCta }: Props) {
           },
         }}
       >
-        <Icon name={icon} size={48} strokeWidth={1.6} />
+        <Icon name={icon} size={56} strokeWidth={1.6} />
       </motion.div>
 
       <motion.h2
@@ -63,6 +63,7 @@ export function EmptyState({ icon, title, body, ctaLabel, onCta }: Props) {
           initial={reduce ? false : { opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.45, ease: easings.easeOutExpo }}
+          style={{ width: '100%', maxWidth: 280 }}
         >
           <Button onClick={onCta}>{ctaLabel}</Button>
         </motion.div>
