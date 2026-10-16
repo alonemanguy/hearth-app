@@ -27,13 +27,29 @@ import Terms from './pages/Terms';
 import DeleteAccount from './pages/DeleteAccount';
 import ResetPassword from './pages/ResetPassword';
 import ForgotPassword from './pages/ForgotPassword';
+import Search from './pages/Search';
+import Waitlist from './pages/Waitlist';
 import TabBar from './components/TabBar';
 import CookieConsent from './components/CookieConsent';
 import Logo from './components/Logo';
 
+const WAITLIST_MODE = false; // Flip to true to enable waitlist gating
+
 function AppRoutes() {
   const { user, loading, hasOnboarded } = useAuth();
   const location = useLocation();
+
+  if (WAITLIST_MODE && location.pathname !== '/waitlist' && !user) {
+    return (
+      <>
+        <Routes>
+          <Route path="/waitlist" element={<Waitlist />} />
+          <Route path="*" element={<Navigate to="/waitlist" replace />} />
+        </Routes>
+        <CookieConsent />
+      </>
+    );
+  }
 
   if (
     location.pathname === '/privacy' ||
@@ -79,6 +95,9 @@ function AppRoutes() {
         </>
       );
     }
+    if (WAITLIST_MODE) {
+      return <Navigate to="/waitlist" replace />;
+    }
     return <Navigate to="/welcome" replace />;
   }
 
@@ -112,12 +131,11 @@ function AppRoutes() {
         <Route path="/warranties" element={<Warranties />} />
         <Route path="/household" element={<Household />} />
         <Route path="/notifications" element={<Notifications />} />
-        <Route
-          path="/notification-preferences"
-          element={<NotificationPreferences />}
-        />
+        <Route path="/notification-preferences" element={<NotificationPreferences />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/delete-account" element={<DeleteAccount />} />
+        <Route path="/search" element={<Search />} />
+        <Route path="/waitlist" element={<Waitlist />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <TabBar />
