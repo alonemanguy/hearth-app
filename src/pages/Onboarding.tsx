@@ -60,6 +60,7 @@ export default function Onboarding() {
   const [ageConfirmed, setAgeConfirmed] = useState(false);
   const [homeNickname, setHomeNickname] = useState('');
   const [homeYear, setHomeYear] = useState('');
+  const [propertyId, setPropertyId] = useState<string | null>(null);
 
   const [applianceName, setApplianceName] = useState('');
   const [applianceCategory, setApplianceCategory] =
@@ -103,17 +104,25 @@ export default function Onboarding() {
     }
 
     setBusy(true);
-    const { error: err } = await supabase.from('properties').insert({
-      user_id: user.id,
-      nickname: homeNickname.trim(),
-      year_built: homeYear ? parseInt(homeYear) : null,
-      home_type: 'house',
-    });
+    const { data: propertyData, error: err } = await supabase
+      .from('properties')
+      .insert({
+        user_id: user.id,
+        nickname: homeNickname.trim(),
+        year_built: homeYear ? parseInt(homeYear) : null,
+        home_type: 'house',
+      })
+      .select()
+      .single();
     setBusy(false);
 
     if (err) {
       setError(err.message);
       return;
+    }
+
+    if (propertyData) {
+      setPropertyId(propertyData.id);
     }
     goNext();
   };
@@ -132,6 +141,7 @@ export default function Onboarding() {
       .from('appliances')
       .insert({
         user_id: user.id,
+        property_id: propertyId,
         name: applianceName.trim(),
         category: applianceCategory,
         make: applianceMake.trim() || null,

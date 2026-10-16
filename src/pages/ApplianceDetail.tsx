@@ -7,6 +7,7 @@ import Card from '../components/Card';
 import Button from '../components/Button';
 import Input from '../components/Input';
 import Skeleton from '../components/Skeleton';
+import EmptyState from '../components/EmptyState';
 import AttachmentsSection from '../components/AttachmentsSection';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
@@ -92,7 +93,7 @@ export default function ApplianceDetail() {
 
     setSaving(true);
 
-    const payload = {
+    const basePayload = {
       user_id: user.id,
       name: name.trim(),
       category,
@@ -111,14 +112,21 @@ export default function ApplianceDetail() {
     if (appliance) {
       result = await supabase
         .from('appliances')
-        .update(payload)
+        .update(basePayload)
         .eq('id', appliance.id)
         .select()
         .single();
     } else {
+      const { data: propData } = await supabase
+        .from('properties')
+        .select('id')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: true })
+        .limit(1)
+        .maybeSingle();
       result = await supabase
         .from('appliances')
-        .insert(payload)
+        .insert({ ...basePayload, property_id: propData?.id ?? null })
         .select()
         .single();
     }
