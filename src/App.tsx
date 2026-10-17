@@ -29,6 +29,7 @@ import ResetPassword from './pages/ResetPassword';
 import ForgotPassword from './pages/ForgotPassword';
 import Search from './pages/Search';
 import Waitlist from './pages/Waitlist';
+import Completed from './pages/Completed';
 import TabBar from './components/TabBar';
 import CookieConsent from './components/CookieConsent';
 import Logo from './components/Logo';
@@ -136,6 +137,7 @@ function AppRoutes() {
         <Route path="/delete-account" element={<DeleteAccount />} />
         <Route path="/search" element={<Search />} />
         <Route path="/waitlist" element={<Waitlist />} />
+        <Route path="/completed" element={<Completed />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <TabBar />
