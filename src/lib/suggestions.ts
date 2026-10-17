@@ -16,6 +16,17 @@ export type CommonAppliance = {
   category: ApplianceCategory;
 };
 
+export type ApplianceTemplate = {
+  id: string;
+  label: string;
+  category: ApplianceCategory;
+  defaultTask: string;
+  defaultInterval: 'once' | 'monthly' | 'quarterly' | 'yearly';
+  defaultDueInDays: number;
+  icon: IconName;
+  reason: string;
+};
+
 export type MonthlyFocus = {
   id: string;
   title: string;
@@ -33,6 +44,89 @@ export type SeasonalTask = {
   icon: IconName;
 };
 
+export const APPLIANCE_TEMPLATES: ApplianceTemplate[] = [
+  {
+    id: 'hvac',
+    label: 'HVAC system',
+    category: 'hvac',
+    defaultTask: 'Replace HVAC filter',
+    defaultInterval: 'quarterly',
+    defaultDueInDays: 90,
+    icon: 'hvac',
+    reason: 'Clean filters keep your air healthy and system efficient.',
+  },
+  {
+    id: 'water-heater',
+    label: 'Water heater',
+    category: 'plumbing',
+    defaultTask: 'Flush water heater',
+    defaultInterval: 'yearly',
+    defaultDueInDays: 365,
+    icon: 'plumbing',
+    reason: 'Removes sediment and extends tank life.',
+  },
+  {
+    id: 'fridge',
+    label: 'Refrigerator',
+    category: 'appliance',
+    defaultTask: 'Clean fridge coils',
+    defaultInterval: 'yearly',
+    defaultDueInDays: 365,
+    icon: 'appliance',
+    reason: 'Prevents overheating and saves energy.',
+  },
+  {
+    id: 'dishwasher',
+    label: 'Dishwasher',
+    category: 'appliance',
+    defaultTask: 'Clean dishwasher filter',
+    defaultInterval: 'monthly',
+    defaultDueInDays: 30,
+    icon: 'appliance',
+    reason: 'Prevents clogs and keeps dishes clean.',
+  },
+  {
+    id: 'washer-dryer',
+    label: 'Washer / dryer',
+    category: 'appliance',
+    defaultTask: 'Clean dryer vent',
+    defaultInterval: 'yearly',
+    defaultDueInDays: 365,
+    icon: 'appliance',
+    reason: 'Reduces fire risk and shortens drying time.',
+  },
+  {
+    id: 'smoke-detector',
+    label: 'Smoke detectors',
+    category: 'electrical',
+    defaultTask: 'Test smoke detectors',
+    defaultInterval: 'monthly',
+    defaultDueInDays: 30,
+    icon: 'electrical',
+    reason: 'Critical safety check every month.',
+  },
+  {
+    id: 'gutters',
+    label: 'Gutters & roof',
+    category: 'other',
+    defaultTask: 'Clean gutters',
+    defaultInterval: 'yearly',
+    defaultDueInDays: 180,
+    icon: 'plumbing',
+    reason: 'Prevents water damage to your home.',
+  },
+];
+
+export function getApplianceTemplates(): ApplianceTemplate[] {
+  return APPLIANCE_TEMPLATES;
+}
+
+export function getApplianceTemplateById(
+  id: string
+): ApplianceTemplate | undefined {
+  return APPLIANCE_TEMPLATES.find((t) => t.id === id);
+}
+
 const COMMON_APPLIANCES: CommonAppliance[] = [
   { key: 'hvac', label: 'HVAC system', category: 'hvac' },
   { key: 'water-heater', label: 'Water heater', category: 'plumbing' },
@@ -40,6 +134,7 @@ const COMMON_APPLIANCES: CommonAppliance[] = [
   { key: 'dishwasher', label: 'Dishwasher', category: 'appliance' },
   { key: 'washer-dryer', label: 'Washer / dryer', category: 'appliance' },
   { key: 'smoke-detector', label: 'Smoke detectors', category: 'electrical' },
+  { key: 'gutters', label: 'Gutters & roof', category: 'other' },
 ];
 
 export function getCommonApplianceSuggestions(
@@ -335,7 +430,6 @@ const SEASONAL_TASKS: Record<Season, SeasonalTask[]> = {
 export function getSeasonalChecklist(
   _climateZone?: string | null
 ): SeasonalTask[] {
-  // Future: use climate zone to pick different tasks
   return SEASONAL_TASKS[getSeason()].slice(0, 4);
 }
 
@@ -346,7 +440,6 @@ export function getSeasonalChecklist(
 export function hasAnyWarrantyDocs(
   appliances: Appliance[]
 ): boolean {
-  // Heuristic: any appliance with warranty info is a candidate
   return appliances.some((a) => Boolean(a.warranty_expires_at));
 }
 

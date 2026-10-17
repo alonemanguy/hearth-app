@@ -49,7 +49,7 @@ const EMPTY_COPY: Record<HelpLevel, { body: string; cta: string }> = {
     cta: 'Add your first task',
   },
   detailed: {
-    body: 'Add your first task. We\'ll track what needs doing, when it\'s due, and remind you before it matters.',
+    body: 'Add your first task. We\u2019ll track what needs doing, when it\u2019s due, and remind you before it matters.',
     cta: 'Add your first task',
   },
 };
@@ -668,6 +668,21 @@ export default function Home() {
             Improves as you add appliances, track warranties, and complete
             tasks.
           </p>
+          {health.recommendations && health.recommendations.length > 0 && (
+            <div className="health-recommendations">
+              {health.recommendations.slice(0, 2).map((r) => (
+                <button
+                  key={r.id}
+                  type="button"
+                  className="health-recommendation"
+                  onClick={() => navigate(r.linkTo)}
+                >
+                  <span className="health-rec-title">{r.title}</span>
+                  <span className="health-rec-points">+{r.points}</span>
+                </button>
+              ))}
+            </div>
+          )}
         </motion.div>
       )}
 
@@ -758,6 +773,26 @@ export default function Home() {
               title="No tasks yet"
               body={emptyCopy.body}
               ctaLabel={emptyCopy.cta}
+              onCta={() => navigate('/add')}
+            />
+          </motion.div>
+        )}
+
+      {state === 'empty' &&
+        !showWelcomeCard &&
+        !showSeasonal &&
+        appliances.length > 0 && (
+          <motion.div
+            key="empty-tasks"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: easings.easeOutExpo }}
+          >
+            <EmptyState
+              icon="task"
+              title="No tasks yet"
+              body="Add your first recurring task to start getting reminders."
+              ctaLabel="Add a task"
               onCta={() => navigate('/add')}
             />
           </motion.div>
@@ -943,6 +978,32 @@ export default function Home() {
               );
             })}
           </div>
+        </motion.div>
+      )}
+
+      {appliances.length === 0 && tasks.length === 0 && state !== 'loading' && state !== 'error' && !showWelcomeCard && (
+        <motion.div
+          className="section"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: easings.easeOutExpo }}
+        >
+          <Card className="getting-started-card">
+            <div className="getting-started-icon">
+              <Icon name="home" size={32} strokeWidth={1.6} />
+            </div>
+            <div className="getting-started-content">
+              <div className="getting-started-title">Get your home on autopilot</div>
+              <div className="getting-started-sub">
+                Add your first appliance and we'll set up its first reminder automatically.
+              </div>
+            </div>
+            <div className="getting-started-actions">
+              <button className="btn btn--primary" onClick={() => navigate('/appliance/new')}>
+                Add your first appliance
+              </button>
+            </div>
+          </Card>
         </motion.div>
       )}
 

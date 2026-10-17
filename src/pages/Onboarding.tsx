@@ -11,7 +11,11 @@ import { supabase } from '../lib/supabase';
 import { easings } from '../lib/motion';
 import { ApplianceCategory, CATEGORY_LABELS } from '../lib/types';
 import { CATEGORY_ICONS } from '../lib/icons';
-import { getOnboardingPresets } from '../lib/suggestions';
+import {
+  getOnboardingPresets,
+  getApplianceTemplates,
+  getApplianceTemplateById,
+} from '../lib/suggestions';
 
 type Step = 'welcome' | 'name' | 'terms' | 'home' | 'appliance' | 'done';
 
@@ -60,7 +64,6 @@ export default function Onboarding() {
   const [ageConfirmed, setAgeConfirmed] = useState(false);
   const [homeNickname, setHomeNickname] = useState('');
   const [homeYear, setHomeYear] = useState('');
-  const [propertyId, setPropertyId] = useState<string | null>(null);
 
   const [applianceName, setApplianceName] = useState('');
   const [applianceCategory, setApplianceCategory] =
@@ -68,6 +71,9 @@ export default function Onboarding() {
   const [applianceMake, setApplianceMake] = useState('');
   const [applianceModel, setApplianceModel] = useState('');
   const [warrantyExpiry, setWarrantyExpiry] = useState('');
+  const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
+
+  const templates = getApplianceTemplates();
 
   const stepIndex = STEPS.indexOf(step);
   const progressIndex = PROGRESS_STEPS.indexOf(step);
@@ -87,6 +93,14 @@ export default function Onboarding() {
     if (prev) goTo(prev);
   };
 
+  const selectTemplate = (templateId: string) => {
+    const template = getApplianceTemplateById(templateId);
+    if (!template) return;
+    setSelectedTemplate(templateId);
+    setApplianceName(template.label);
+    setApplianceCategory(template.category);
+  };
+
   const handleFinish = async () => {
     setBusy(true);
     setError(null);
@@ -104,25 +118,17 @@ export default function Onboarding() {
     }
 
     setBusy(true);
-    const { data: propertyData, error: err } = await supabase
-      .from('properties')
-      .insert({
-        user_id: user.id,
-        nickname: homeNickname.trim(),
-        year_built: homeYear ? parseInt(homeYear) : null,
-        home_type: 'house',
-      })
-      .select()
-      .single();
+    const { error: err } = await supabase.from('properties').insert({
+      user_id: user.id,
+      nickname: homeNickname.trim(),
+      year_built: homeYear ? parseInt(homeYear) : null,
+      home_type: 'house',
+    });
     setBusy(false);
 
     if (err) {
       setError(err.message);
       return;
-    }
-
-    if (propertyData) {
-      setPropertyId(propertyData.id);
     }
     goNext();
   };
@@ -137,11 +143,14 @@ export default function Onboarding() {
 
     setBusy(true);
 
+    const template = selectedTemplate
+      ? getApplianceTemplateById(selectedTemplate)
+      : undefined;
+
     const { data: inserted, error: err } = await supabase
       .from('appliances')
       .insert({
         user_id: user.id,
-        property_id: propertyId,
         name: applianceName.trim(),
         category: applianceCategory,
         make: applianceMake.trim() || null,
@@ -157,20 +166,46 @@ export default function Onboarding() {
       return;
     }
 
-    // Auto-create preset tasks for this appliance type
-    const presets = getOnboardingPresets(applianceCategory);
-    if (presets.length > 0) {
-      const today = new Date().toISOString().split('T')[0];
-      const taskRows = presets.map((p) => ({
-        user_id: user.id,
-        title: p.title,
-        appliance_id: inserted.id,
-        appliance: inserted.name,
-        due_date: addDays(today, p.dueInDays),
-        repeat: p.repeat,
-        status: 'due',
-      }));
-      await supabase.from('tasks').insert(taskRows);
+    const today = new Date().toISOString().split('T')[0];
+    let taskTitle: string;
+    let taskRepeat: 'once' | 'monthly' | 'quarterly' | 'yearly' = 'once';
+    let taskDueInDays: number = 7;
+
+    if (template) {
+      taskTitle = template.defaultTask;
+      taskRepeat = template.defaultInterval;
+      taskDueInDays = template.defaultDueInDays;
+    } else {
+      const presets = getOnboardingPresets(applianceCategory);
+      if (presets.length > 0) {
+        taskTitle = presets[0].title;
+        taskRepeat = presets[0].repeat;
+        taskDueInDays = presets[0].dueInDays;
+      } else {
+        taskTitle = 'Check appliance';
+        taskRepeat = 'once';
+        taskDueInDays = 7;
+      }
+    }
+
+    const dueDate = addDays(today, taskDueInDays);
+
+    const { error: taskError } = await supabase.from('tasks').insert({
+      user_id: user.id,
+      title: taskTitle,
+      appliance_id: inserted.id,
+      appliance: inserted.name,
+      due_date: dueDate,
+      repeat: taskRepeat,
+      status: 'due',
+    });
+
+    if (taskError) {
+      console.error('Error creating first task:', taskError);
+      setBusy(false);
+      setError('Appliance saved, but we could not set up your first reminder.');
+      goNext();
+      return;
     }
 
     setBusy(false);
@@ -370,98 +405,133 @@ export default function Onboarding() {
     </motion.div>
   );
 
-  const renderAppliance = () => (
-    <motion.div
-      className="wizard-body"
-      key="appliance"
-      initial={reduce ? false : { opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={reduce ? undefined : { opacity: 0, y: -8 }}
-      transition={{ duration: 0.4, ease: easings.easeOutExpo }}
-    >
-      <div className="wizard-header">
-        <h1 className="wizard-title">Add your first appliance</h1>
-        <p className="wizard-subtitle">
-          We'll set up its first reminder for you automatically.
-        </p>
-      </div>
+  const renderAppliance = () => {
+    const template = selectedTemplate ? getApplianceTemplateById(selectedTemplate) : null;
 
-      <div className="wizard-content">
-        <Input
-          label="Name"
-          value={applianceName}
-          onChange={setApplianceName}
-          placeholder="e.g. Kitchen Fridge, Main HVAC"
-        />
+    return (
+      <motion.div
+        className="wizard-body"
+        key="appliance"
+        initial={reduce ? false : { opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={reduce ? undefined : { opacity: 0, y: -8 }}
+        transition={{ duration: 0.4, ease: easings.easeOutExpo }}
+      >
+        <div className="wizard-header">
+          <h1 className="wizard-title">Add your first appliance</h1>
+          <p className="wizard-subtitle">
+            Pick what you have, and we'll set up its first reminder for you.
+          </p>
+        </div>
 
-        <div className="input-group">
-          <label>Category</label>
-          <div className="category-grid">
-            {CATEGORIES.map((c) => {
-              const CategoryIcon = CATEGORY_ICONS[c];
+        <div className="wizard-content">
+          <div className="template-grid">
+            {templates.map((t) => {
+              const isSelected = selectedTemplate === t.id;
+              const TemplateIcon = CATEGORY_ICONS[t.category];
               return (
                 <button
-                  key={c}
+                  key={t.id}
                   type="button"
-                  className={`category-chip ${
-                    applianceCategory === c ? 'category-chip--active' : ''
-                  }`}
-                  onClick={() => setApplianceCategory(c)}
+                  className={`template-card ${isSelected ? 'template-card--active' : ''}`}
+                  onClick={() => selectTemplate(t.id)}
                 >
-                  <CategoryIcon size={22} strokeWidth={1.8} />
-                  <span className="category-chip-label">
-                    {CATEGORY_LABELS[c]}
-                  </span>
+                  <div className="template-icon">
+                    <TemplateIcon size={24} strokeWidth={1.8} />
+                  </div>
+                  <div className="template-info">
+                    <div className="template-title">{t.label}</div>
+                    <div className="template-task">{t.defaultTask}</div>
+                    <div className="template-interval">
+                      {t.defaultInterval} • {t.defaultDueInDays} days
+                    </div>
+                  </div>
                 </button>
               );
             })}
           </div>
-        </div>
 
-        <div className="details-section-header">
-          <span className="details-section-title">Details</span>
-          <span className="details-section-hint">
-            Helps Hearth track warranties. Skip if you don't know them yet.
-          </span>
-        </div>
+          <div className="divider">Or enter manually</div>
 
-        <div className="input-row">
           <Input
-            label="Make"
-            value={applianceMake}
-            onChange={setApplianceMake}
-            placeholder="Whirlpool"
+            label="Name"
+            value={applianceName}
+            onChange={setApplianceName}
+            placeholder="e.g. Kitchen Fridge, Main HVAC"
           />
+
+          <div className="input-group">
+            <label>Category</label>
+            <div className="category-grid">
+              {CATEGORIES.map((c) => {
+                const CategoryIcon = CATEGORY_ICONS[c];
+                return (
+                  <button
+                    key={c}
+                    type="button"
+                    className={`category-chip ${
+                      applianceCategory === c ? 'category-chip--active' : ''
+                    }`}
+                    onClick={() => {
+                      setApplianceCategory(c);
+                      setSelectedTemplate(null);
+                    }}
+                  >
+                    <CategoryIcon size={22} strokeWidth={1.8} />
+                    <span className="category-chip-label">
+                      {CATEGORY_LABELS[c]}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="details-section-header">
+            <span className="details-section-title">Details</span>
+            <span className="details-section-hint">
+              Helps Hearth track warranties. Skip if you don't know them yet.
+            </span>
+          </div>
+
+          <div className="input-row">
+            <Input
+              label="Make"
+              value={applianceMake}
+              onChange={setApplianceMake}
+              placeholder="Whirlpool"
+            />
+            <Input
+              label="Model"
+              value={applianceModel}
+              onChange={setApplianceModel}
+              placeholder="WRX735"
+            />
+          </div>
+
           <Input
-            label="Model"
-            value={applianceModel}
-            onChange={setApplianceModel}
-            placeholder="WRX735"
+            label="Warranty expires"
+            type="date"
+            value={warrantyExpiry}
+            onChange={setWarrantyExpiry}
           />
         </div>
 
-        <Input
-          label="Warranty expires"
-          type="date"
-          value={warrantyExpiry}
-          onChange={setWarrantyExpiry}
-        />
-      </div>
-
-      <div className="wizard-actions">
-        <Button onClick={handleSaveAppliance} disabled={busy}>
-          {busy
-            ? 'Setting up...'
-            : applianceName.trim()
-            ? 'Add appliance'
-            : 'Skip for now'}
-        </Button>
-        <button className="wizard-back" onClick={goBack}>
-          Back
-        </button>
-      </div>
-    </motion.div>
-  );
+        <div className="wizard-actions">
+          <Button onClick={handleSaveAppliance} disabled={busy}>
+            {busy
+              ? 'Setting up...'
+              : applianceName.trim()
+              ? 'Add appliance'
+              : 'Skip for now'}
+          </Button>
+          <button className="wizard-back" onClick={goBack}>
+            Back
+          </button>
+        </div>
+      </motion.div>
+    );
+  };
 
   const renderDone = () => (
     <motion.div
