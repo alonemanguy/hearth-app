@@ -30,11 +30,12 @@ import ForgotPassword from './pages/ForgotPassword';
 import Search from './pages/Search';
 import Waitlist from './pages/Waitlist';
 import Completed from './pages/Completed';
+import Health from './pages/Health';
 import TabBar from './components/TabBar';
 import CookieConsent from './components/CookieConsent';
 import Logo from './components/Logo';
 
-const WAITLIST_MODE = false; // Flip to true to enable waitlist gating
+const WAITLIST_MODE = false;
 
 function AppRoutes() {
   const { user, loading, hasOnboarded } = useAuth();
@@ -138,6 +139,7 @@ function AppRoutes() {
         <Route path="/search" element={<Search />} />
         <Route path="/waitlist" element={<Waitlist />} />
         <Route path="/completed" element={<Completed />} />
+        <Route path="/health" element={<Health />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <TabBar />

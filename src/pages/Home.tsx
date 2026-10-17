@@ -418,7 +418,7 @@ export default function Home() {
   const showMonthlyFocus = monthlyFocus.length > 0 && !showWelcomeCard;
 
   const seasonalTasks =
-    openCount < 3 && state !== 'loading'
+    state !== 'loading'
       ? getSeasonalChecklist(property?.climate_zone)
       : [];
   const showSeasonal = seasonalTasks.length > 0 && !showWelcomeCard;
@@ -798,6 +798,32 @@ export default function Home() {
           </motion.div>
         )}
 
+      {appliances.length === 0 && tasks.length === 0 && state !== 'loading' && state !== 'error' && !showWelcomeCard && (
+        <motion.div
+          className="section"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: easings.easeOutExpo }}
+        >
+          <Card className="getting-started-card">
+            <div className="getting-started-icon">
+              <Icon name="home" size={32} strokeWidth={1.6} />
+            </div>
+            <div className="getting-started-content">
+              <div className="getting-started-title">Get your home on autopilot</div>
+              <div className="getting-started-sub">
+                Add your first appliance and we'll set up its first reminder automatically.
+              </div>
+            </div>
+            <div className="getting-started-actions">
+              <button className="btn btn--primary" onClick={() => navigate('/appliance/new')}>
+                Add your first appliance
+              </button>
+            </div>
+          </Card>
+        </motion.div>
+      )}
+
       {state === 'populated' && (
         <motion.div
           key="populated"
@@ -978,32 +1004,6 @@ export default function Home() {
               );
             })}
           </div>
-        </motion.div>
-      )}
-
-      {appliances.length === 0 && tasks.length === 0 && state !== 'loading' && state !== 'error' && !showWelcomeCard && (
-        <motion.div
-          className="section"
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, ease: easings.easeOutExpo }}
-        >
-          <Card className="getting-started-card">
-            <div className="getting-started-icon">
-              <Icon name="home" size={32} strokeWidth={1.6} />
-            </div>
-            <div className="getting-started-content">
-              <div className="getting-started-title">Get your home on autopilot</div>
-              <div className="getting-started-sub">
-                Add your first appliance and we'll set up its first reminder automatically.
-              </div>
-            </div>
-            <div className="getting-started-actions">
-              <button className="btn btn--primary" onClick={() => navigate('/appliance/new')}>
-                Add your first appliance
-              </button>
-            </div>
-          </Card>
         </motion.div>
       )}
 
