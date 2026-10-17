@@ -38,8 +38,9 @@ export default function CookieConsent() {
         >
           <div className="cookie-banner-inner">
             <p className="cookie-banner-text">
-              Hearth uses only essential cookies to keep you signed in. No
-              tracking, no ads, no third-party analytics.
+              Hearth uses essential cookies to keep you signed in, and optional
+              analytics (PostHog) to improve the app. No ads, no selling your
+              data.
             </p>
             <div className="cookie-banner-actions">
               <button
@@ -54,7 +55,7 @@ export default function CookieConsent() {
                 onClick={accept}
                 type="button"
               >
-                Got it
+                Accept all
               </button>
             </div>
           </div>

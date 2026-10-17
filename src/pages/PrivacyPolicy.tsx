@@ -9,7 +9,7 @@ export default function PrivacyPolicy() {
     <Screen>
       <Header title="Privacy Policy" onBack={() => navigate(-1)} />
       <div className="legal-page">
-        <p className="legal-meta">Effective date: 14 October 2026</p>
+        <p className="legal-meta">Effective date: 17 October 2026</p>
 
         <p>
           Hearth ("we", "us", "our") provides a home maintenance app. This
@@ -44,10 +44,17 @@ export default function PrivacyPolicy() {
             <strong>Technical data</strong> — basic server logs (IP, timestamp,
             retained up to 90 days) and anonymized error logs.
           </li>
+          <li>
+            <strong>Analytics data</strong> — anonymized usage events (page
+            views, button clicks, feature usage) via PostHog to improve the app.
+            No personal identifiers are stored in analytics.
+          </li>
         </ul>
         <p>
-          We do <strong>not</strong> collect: location, contacts, photos,
-          browsing history, biometric data, or any third-party tracking.
+          We do <strong>not</strong> collect: location, contacts, browsing
+          history outside the app, biometric data. We do not sell your data,
+          share it with advertisers, use it to train AI models, or give it to
+          data brokers.
         </p>
 
         <h2>3. How we use your data</h2>
@@ -56,11 +63,8 @@ export default function PrivacyPolicy() {
           <li>Send the notifications you asked for.</li>
           <li>Respond to support requests.</li>
           <li>Detect and fix bugs.</li>
+          <li>Improve the app experience through anonymized analytics.</li>
         </ul>
-        <p>
-          We <strong>do not</strong> sell your data, share it with advertisers,
-          use it to train AI models, or give it to data brokers.
-        </p>
 
         <h2>4. Legal bases (GDPR)</h2>
         <p>If you are in the EU or UK, we rely on:</p>
@@ -69,7 +73,8 @@ export default function PrivacyPolicy() {
             <strong>Contract</strong> — to provide the app you signed up for.
           </li>
           <li>
-            <strong>Consent</strong> — for push notifications.
+            <strong>Consent</strong> — for push notifications and optional
+            analytics.
           </li>
           <li>
             <strong>Legitimate interest</strong> — for security and abuse
@@ -88,6 +93,9 @@ export default function PrivacyPolicy() {
           </li>
           <li>
             <strong>Vercel</strong> — application hosting.
+          </li>
+          <li>
+            <strong>PostHog</strong> — anonymized product analytics.
           </li>
           <li>
             <strong>Google Firebase Cloud Messaging</strong> — push notification
@@ -117,6 +125,10 @@ export default function PrivacyPolicy() {
           <li>
             <strong>Object</strong> to processing — contact us.
           </li>
+          <li>
+            <strong>Opt out of analytics</strong> — decline non-essential
+            cookies in the cookie banner.
+          </li>
         </ul>
         <p>
           For EU/UK users, you can complain to your local Data Protection
@@ -128,6 +140,7 @@ export default function PrivacyPolicy() {
           <li>Active accounts — kept while you use Hearth.</li>
           <li>Deleted accounts — wiped within 30 days.</li>
           <li>Server logs — retained up to 90 days.</li>
+          <li>Analytics events — retained up to 90 days.</li>
         </ul>
 
         <h2>8. Security</h2>
@@ -136,6 +149,7 @@ export default function PrivacyPolicy() {
           <li>Encrypted at rest (Supabase).</li>
           <li>Row-Level Security isolates your data from other users.</li>
           <li>Passwords hashed with bcrypt.</li>
+          <li>Rate limiting on authentication endpoints.</li>
         </ul>
 
         <h2>9. Children</h2>

@@ -11,7 +11,7 @@ app.use('*', logger(console.log));
 app.use(
   "/*",
   cors({
-    origin: "*",
+    origin: "https://gethearth.vercel.app",
     allowHeaders: ["Content-Type", "Authorization"],
     allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     exposeHeaders: ["Content-Length"],

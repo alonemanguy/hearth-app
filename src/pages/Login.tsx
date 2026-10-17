@@ -9,6 +9,7 @@ import { useAuth } from '../lib/auth';
 import { easings } from '../lib/motion';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PASSWORD_RE = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>]).{12,}$/;
 
 export function Login() {
   const navigate = useNavigate();
@@ -35,14 +36,25 @@ export function Login() {
       setEmailError(null);
     }
 
-    if (!password) {
-      setPasswordError('Password is required');
-      ok = false;
-    } else if (password.length < 6) {
-      setPasswordError('Password must be at least 6 characters');
-      ok = false;
+    if (isSignUp) {
+      if (!password) {
+        setPasswordError('Password is required');
+        ok = false;
+      } else if (!PASSWORD_RE.test(password)) {
+        setPasswordError(
+          'Password must be 12+ characters with uppercase, lowercase, number, and special character'
+        );
+        ok = false;
+      } else {
+        setPasswordError(null);
+      }
     } else {
-      setPasswordError(null);
+      if (!password) {
+        setPasswordError('Password is required');
+        ok = false;
+      } else {
+        setPasswordError(null);
+      }
     }
 
     return ok;
@@ -124,11 +136,18 @@ export function Login() {
             type="password"
             value={password}
             onChange={setPassword}
-            placeholder={isSignUp ? 'At least 6 characters' : 'Your password'}
+            placeholder={isSignUp ? '12+ chars with uppercase, number, symbol' : 'Your password'}
             error={passwordError}
             autoComplete={isSignUp ? 'new-password' : 'current-password'}
             required
           />
+
+          {isSignUp && (
+            <p className="auth-hint">
+              Password must be 12+ characters with at least one uppercase letter,
+              one lowercase letter, one number, and one special character.
+            </p>
+          )}
 
           {!isSignUp && (
             <div style={{ textAlign: 'right', marginTop: -8, marginBottom: 16 }}>
