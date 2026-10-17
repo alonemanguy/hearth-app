@@ -119,6 +119,11 @@ const SNOOZE_OPTIONS: SnoozeOption[] = [
   { label: 'Next month', days: 30 },
 ];
 
+type UndoState = {
+  task: Task;
+  successorId: string | null;
+};
+
 export default function Detail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -131,6 +136,7 @@ export default function Detail() {
   const [toastVisible, setToastVisible] = useState(false);
   const [snoozeOpen, setSnoozeOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [undoPending, setUndoPending] = useState<UndoState | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -160,6 +166,33 @@ export default function Detail() {
     setToastVisible(true);
   };
 
+  const handleUndo = async () => {
+    if (!undoPending || !task) return;
+
+    // Revert the task to due
+    const { error: updateError } = await supabase
+      .from('tasks')
+      .update({ status: 'due', last_completed: null })
+      .eq('id', task.id);
+
+    if (updateError) {
+      console.error('Error undoing task:', updateError);
+      showToast('Could not undo');
+      return;
+    }
+
+    // Delete the successor task if one was created
+    if (undoPending.successorId) {
+      await supabase.from('tasks').delete().eq('id', undoPending.successorId);
+    }
+
+    setUndoPending(null);
+    setCelebrating(false);
+    setToastVisible(false);
+    showToast('Task restored');
+    setTask({ ...task, status: 'due', last_completed: null });
+  };
+
   const markAsDone = async () => {
     if (!task || celebrating) return;
 
@@ -179,6 +212,8 @@ export default function Detail() {
     }
 
     let nextDate: string | null = null;
+    let successorId: string | null = null;
+
     if (task.repeat && task.repeat !== 'once') {
       nextDate = getNextDueDate(task.due_date, task.repeat);
 
@@ -186,22 +221,31 @@ export default function Detail() {
         const {
           data: { user },
         } = await supabase.auth.getUser();
-        const { error: insertError } = await supabase.from('tasks').insert({
-          user_id: user?.id,
-          title: task.title,
-          appliance: task.appliance,
-          appliance_id: task.appliance_id,
-          due_date: nextDate,
-          repeat: task.repeat,
-          notes: task.notes,
-          status: 'due',
-        });
+        const { data: inserted, error: insertError } = await supabase
+          .from('tasks')
+          .insert({
+            user_id: user?.id,
+            title: task.title,
+            appliance: task.appliance,
+            appliance_id: task.appliance_id,
+            due_date: nextDate,
+            repeat: task.repeat,
+            notes: task.notes,
+            status: 'due',
+          })
+          .select('id')
+          .single();
 
         if (insertError) {
           console.error('Error scheduling next task:', insertError);
+        } else {
+          successorId = inserted?.id ?? null;
         }
       }
     }
+
+    // Set up 10-second undo window instead of immediate navigation
+    setUndoPending({ task: { ...task }, successorId });
 
     if (nextDate) {
       showToast(`Done — next one ${formatDate(nextDate)}`);
@@ -209,7 +253,14 @@ export default function Detail() {
       showToast('Task completed');
     }
 
-    setTimeout(() => navigate('/'), reduce ? 400 : 1400);
+    // Auto-navigate home after undo window expires
+    const undoTimer = setTimeout(() => {
+      setUndoPending(null);
+      navigate('/');
+    }, reduce ? 400 : 10000);
+
+    // Store timer reference so we can clear it if undo is clicked
+    // (timer cleanup handled by component unmount or timeout)
   };
 
   const handleSnooze = async (days: number) => {
@@ -349,14 +400,16 @@ export default function Detail() {
             ease: easings.easeOutExpo,
           }}
         >
-          <StatusPill status={celebrating ? 'done' : task.status} />
+          <StatusPill
+            status={undoPending || celebrating ? 'done' : task.status}
+          />
         </motion.div>
       </motion.div>
 
       <motion.div variants={infoContainer} initial="hidden" animate="show">
         <motion.div
           animate={
-            celebrating && !reduce
+            (celebrating || undoPending) && !reduce
               ? { scale: 0.97, opacity: 0.5, filter: 'blur(2px)' }
               : { scale: 1, opacity: 1, filter: 'blur(0px)' }
           }
@@ -391,7 +444,7 @@ export default function Detail() {
         <motion.div
           className="section"
           initial={reduce ? false : { opacity: 0, y: 12 }}
-          animate={{ opacity: celebrating ? 0.4 : 1, y: 0 }}
+          animate={{ opacity: (celebrating || undoPending) ? 0.4 : 1, y: 0 }}
           transition={{
             delay: 0.35,
             duration: 0.45,
@@ -411,7 +464,7 @@ export default function Detail() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5, duration: 0.45, ease: easings.easeOutExpo }}
       >
-        {!celebrating && (
+        {!celebrating && !undoPending && (
           <>
             <div className="celebration-wrap">
               <motion.div
@@ -445,7 +498,25 @@ export default function Detail() {
           </>
         )}
 
-        {celebrating && !reduce && (
+        {undoPending && (
+          <div className="celebration-wrap">
+            <motion.div
+              animate={{ backgroundColor: '#2E7D32', scale: 1.02 }}
+              transition={{ type: 'spring', stiffness: 260, damping: 28 }}
+              style={{ borderRadius: '12px', overflow: 'hidden' }}
+            >
+              <button
+                className="btn btn--primary celebration-btn"
+                disabled
+              >
+                <AnimatedCheck reduce={reduce} />
+                Done
+              </button>
+            </motion.div>
+          </div>
+        )}
+
+        {celebrating && !reduce && !undoPending && (
           <>
             <motion.div
               className="celebration-ring"
@@ -462,7 +533,7 @@ export default function Detail() {
           </>
         )}
 
-        {celebrating && (
+        {celebrating && !undoPending && (
           <div className="celebration-wrap">
             <motion.div
               animate={{ backgroundColor: '#2E7D32', scale: 1.02 }}
@@ -481,7 +552,7 @@ export default function Detail() {
         )}
       </motion.div>
 
-      {!celebrating && (
+      {!celebrating && !undoPending && (
         <div style={{ marginTop: 32, textAlign: 'center' }}>
           <button
             className="danger-link"
@@ -498,7 +569,15 @@ export default function Detail() {
       <Toast
         message={toastMessage}
         visible={toastVisible}
-        onHide={() => setToastVisible(false)}
+        onHide={() => {
+          setToastVisible(false);
+          if (!undoPending) {
+            navigate('/');
+          }
+        }}
+        actionLabel={undoPending ? 'Undo' : undefined}
+        onAction={undoPending ? handleUndo : undefined}
+        timeout={undoPending ? 10000 : 2500}
       />
     </Screen>
   );

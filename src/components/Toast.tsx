@@ -7,14 +7,24 @@ type Props = {
   message: string;
   visible: boolean;
   onHide: () => void;
+  actionLabel?: string;
+  onAction?: () => void;
+  timeout?: number;
 };
 
-export function Toast({ message, visible, onHide }: Props) {
+export function Toast({
+  message,
+  visible,
+  onHide,
+  actionLabel,
+  onAction,
+  timeout = 2500,
+}: Props) {
   useEffect(() => {
     if (!visible) return;
-    const timer = setTimeout(onHide, 2500);
+    const timer = setTimeout(onHide, timeout);
     return () => clearTimeout(timer);
-  }, [visible, onHide]);
+  }, [visible, onHide, timeout]);
 
   return (
     <AnimatePresence>
@@ -30,6 +40,18 @@ export function Toast({ message, visible, onHide }: Props) {
             <Icon name="check" size={12} strokeWidth={3} />
           </span>
           <span className="toast-message">{message}</span>
+          {actionLabel && onAction && (
+            <button
+              type="button"
+              className="toast-action"
+              onClick={(e) => {
+                e.stopPropagation();
+                onAction();
+              }}
+            >
+              {actionLabel}
+            </button>
+          )}
         </motion.div>
       )}
     </AnimatePresence>
