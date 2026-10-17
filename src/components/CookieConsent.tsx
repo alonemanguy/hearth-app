@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { easings } from '../lib/motion';
+import { analytics } from '../lib/analytics';
 
 const STORAGE_KEY = 'hearth.cookie_consent.v1';
 
@@ -18,6 +19,7 @@ export default function CookieConsent() {
 
   const accept = () => {
     localStorage.setItem(STORAGE_KEY, 'accepted');
+    analytics.init();
     setVisible(false);
   };
 
