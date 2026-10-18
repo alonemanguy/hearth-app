@@ -17,7 +17,11 @@ type AuthContextType = {
   helpLevel: HelpLevel;
   hasOnboarded: boolean;
   displayName: string | null;
-  signUp: (email: string, password: string) => Promise<{ error: string | null }>;
+  signUp: (
+    email: string,
+    password: string
+  ) => Promise<{ error: string | null; needsConfirmation: boolean }>;
+  resendConfirmation: (email: string) => Promise<{ error: string | null }>;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
   setHelpLevel: (level: HelpLevel) => Promise<void>;
@@ -53,7 +57,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signUp = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signUp({ email, password });
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { emailRedirectTo: window.location.origin },
+    });
+
+    if (error) return { error: error.message, needsConfirmation: false };
+
+    // When email confirmation is on, signUp succeeds without a session. The
+    // caller has to ask the person to open the link, otherwise the form just
+    // sits there looking like nothing happened.
+    return { error: null, needsConfirmation: !data.session };
+  };
+
+  const resendConfirmation = async (email: string) => {
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email,
+      options: { emailRedirectTo: window.location.origin },
+    });
     return { error: error?.message ?? null };
   };
 
@@ -116,6 +139,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         hasOnboarded,
         displayName,
         signUp,
+        resendConfirmation,
         signIn,
         signOut,
         setHelpLevel,

@@ -6,6 +6,7 @@ import Input from '../components/Input';
 import Button from '../components/Button';
 import Logo from '../components/Logo';
 import { useAuth } from '../lib/auth';
+import { Icon } from '../lib/icons';
 import { easings } from '../lib/motion';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -65,7 +66,7 @@ function PasswordChecklist({ password }: { password: string }) {
 
 export function Login() {
   const navigate = useNavigate();
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, resendConfirmation } = useAuth();
   const reduce = useReducedMotion();
 
   const [email, setEmail] = useState('');
@@ -75,6 +76,9 @@ export function Login() {
   const [authError, setAuthError] = useState<string | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [pendingEmail, setPendingEmail] = useState<string | null>(null);
+  const [resending, setResending] = useState(false);
+  const [resent, setResent] = useState(false);
 
   const validate = () => {
     let ok = true;
@@ -119,12 +123,46 @@ export function Login() {
     if (!validate()) return;
 
     setSubmitting(true);
-    const { error } = isSignUp
-      ? await signUp(email, password)
-      : await signIn(email, password);
+
+    if (isSignUp) {
+      const { error, needsConfirmation } = await signUp(email, password);
+      setSubmitting(false);
+
+      if (error) {
+        setAuthError(error);
+        return;
+      }
+
+      if (needsConfirmation) {
+        setResent(false);
+        setPendingEmail(email);
+        return;
+      }
+
+      // A session came back, so the router takes over from here.
+      return;
+    }
+
+    const { error } = await signIn(email, password);
     setSubmitting(false);
 
     if (error) setAuthError(error);
+  };
+
+  const handleResend = async () => {
+    if (!pendingEmail || resending) return;
+
+    setResending(true);
+    setAuthError(null);
+    const { error } = await resendConfirmation(pendingEmail);
+    setResending(false);
+
+    if (error) {
+      setAuthError(error);
+      return;
+    }
+
+    setResent(true);
   };
 
   const toggleMode = () => {
@@ -133,6 +171,61 @@ export function Login() {
     setEmailError(null);
     setPasswordError(null);
   };
+
+  // Signup succeeded but the account needs to be confirmed before it can sign
+  // in. Without this the form would clear and look like it did nothing.
+  if (pendingEmail) {
+    return (
+      <Screen>
+        <motion.div
+          initial={reduce ? false : { opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: easings.easeOutExpo }}
+          style={{ textAlign: 'center', paddingTop: 24 }}
+        >
+          <div className="auth-success-icon">
+            <Icon name="mail" size={32} strokeWidth={1.6} />
+          </div>
+          <h2 className="auth-title" style={{ marginBottom: 12 }}>
+            Check your inbox
+          </h2>
+          <p className="auth-subtitle" style={{ marginBottom: 24 }}>
+            We sent a confirmation link to <strong>{pendingEmail}</strong>. Open
+            it to finish setting up your account.
+          </p>
+
+          {authError && (
+            <div className="auth-error" role="alert">
+              {authError}
+            </div>
+          )}
+
+          <Button onClick={handleResend} disabled={resending}>
+            {resending ? 'Sending...' : 'Resend email'}
+          </Button>
+
+          {resent && (
+            <p className="auth-subtitle" style={{ marginTop: 12 }}>
+              Sent again. Check your inbox.
+            </p>
+          )}
+
+          <button
+            type="button"
+            className="auth-toggle"
+            onClick={() => {
+              setPendingEmail(null);
+              setResent(false);
+              setAuthError(null);
+              setPassword('');
+            }}
+          >
+            Use a different email
+          </button>
+        </motion.div>
+      </Screen>
+    );
+  }
 
   return (
     <Screen>
