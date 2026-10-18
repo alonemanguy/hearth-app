@@ -15,9 +15,23 @@ import {
   getOnboardingPresets,
   getApplianceTemplates,
   getApplianceTemplateById,
+  ApplianceTemplate,
 } from '../lib/suggestions';
 
 type Step = 'welcome' | 'name' | 'terms' | 'home' | 'appliance' | 'done';
+
+const INTERVAL_LABELS: Record<ApplianceTemplate['defaultInterval'], string> = {
+  once: 'One time',
+  monthly: 'Every month',
+  quarterly: 'Every 3 months',
+  yearly: 'Every year',
+};
+
+function firstDueLabel(days: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
 
 const STEPS: Step[] = [
   'welcome',
@@ -445,7 +459,9 @@ export default function Onboarding() {
                     <div className="template-title">{t.label}</div>
                     <div className="template-task">{t.defaultTask}</div>
                     <div className="template-interval">
-                      {t.defaultInterval} • {t.defaultDueInDays} days
+                      {INTERVAL_LABELS[t.defaultInterval]}
+                      {' \u00b7 '}
+                      first due {firstDueLabel(t.defaultDueInDays)}
                     </div>
                   </div>
                 </button>
