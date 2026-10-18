@@ -143,7 +143,7 @@ export default function NotificationPreferences() {
 
             {pushError && (
               <div
-                className="auth-error"
+                className="form-error"
                 role="alert"
                 style={{ marginTop: 12 }}
               >
@@ -183,8 +183,8 @@ export default function NotificationPreferences() {
               <div className="push-card-text">
                 <div className="push-card-title">Push not supported here</div>
                 <div className="push-card-desc">
-                  Add Hearth to your home screen for the best experience —
-                  you'll get real reminders on supported devices.
+                  Add Hearth to your home screen to get reminders on this
+                  device.
                 </div>
               </div>
             </div>

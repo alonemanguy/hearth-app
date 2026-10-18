@@ -134,6 +134,7 @@ export default function Detail() {
   const [celebrating, setCelebrating] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastVisible, setToastVisible] = useState(false);
+  const [toastTone, setToastTone] = useState<'default' | 'error'>('default');
   const [snoozeOpen, setSnoozeOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [undoPending, setUndoPending] = useState<UndoState | null>(null);
@@ -161,8 +162,9 @@ export default function Detail() {
     void fetchTask();
   }, [id, navigate]);
 
-  const showToast = (msg: string) => {
+  const showToast = (msg: string, tone: 'default' | 'error' = 'default') => {
     setToastMessage(msg);
+    setToastTone(tone);
     setToastVisible(true);
   };
 
@@ -177,7 +179,7 @@ export default function Detail() {
 
     if (updateError) {
       console.error('Error undoing task:', updateError);
-      showToast('Could not undo');
+      showToast('Could not undo', 'error');
       return;
     }
 
@@ -248,7 +250,7 @@ export default function Detail() {
     setUndoPending({ task: { ...task }, successorId });
 
     if (nextDate) {
-      showToast(`Done — next one ${formatDate(nextDate)}`);
+      showToast(`Done. Next one ${formatDate(nextDate)}`);
     } else {
       showToast('Task completed');
     }
@@ -279,7 +281,7 @@ export default function Detail() {
 
     if (error) {
       console.error('Error snoozing task:', error);
-      showToast('Could not snooze');
+      showToast('Could not snooze', 'error');
       return;
     }
 
@@ -309,7 +311,7 @@ export default function Detail() {
 
     if (error) {
       console.error('Error deleting task:', error);
-      showToast('Could not delete');
+      showToast('Could not delete', 'error');
       return;
     }
 
@@ -319,7 +321,7 @@ export default function Detail() {
   if (loading || !task) {
     return (
       <Screen>
-        <Header title="Task Detail" onBack={() => navigate(-1)} />
+        <Header title="Task detail" onBack={() => navigate(-1)} />
         <Skeleton height="32px" width="70%" />
         <div style={{ height: 16 }} />
         <Skeleton height="200px" />
@@ -379,7 +381,7 @@ export default function Detail() {
 
   return (
     <Screen>
-      <Header title="Task Detail" onBack={() => navigate(-1)} />
+      <Header title="Task detail" onBack={() => navigate(-1)} />
 
       <motion.div
         className="detail-header"
@@ -569,6 +571,7 @@ export default function Detail() {
       <Toast
         message={toastMessage}
         visible={toastVisible}
+        tone={toastTone}
         onHide={() => {
           setToastVisible(false);
           if (!undoPending) {

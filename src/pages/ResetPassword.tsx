@@ -64,8 +64,8 @@ export default function ResetPassword() {
     if (!password) {
       setPasswordError('Password is required');
       ok = false;
-    } else if (password.length < 6) {
-      setPasswordError('Password must be at least 6 characters');
+    } else if (password.length < 12) {
+      setPasswordError('Password must be at least 12 characters');
       ok = false;
     }
 
@@ -210,7 +210,7 @@ export default function ResetPassword() {
             type="password"
             value={password}
             onChange={setPassword}
-            placeholder="At least 6 characters"
+            placeholder="At least 12 characters"
             error={passwordError}
             autoComplete="new-password"
             required

@@ -87,7 +87,7 @@ export default function EditTask() {
   if (loading) {
     return (
       <Screen>
-        <Header title="Edit Task" onBack={() => navigate(-1)} />
+        <Header title="Edit task" onBack={() => navigate(-1)} />
         <Skeleton height="72px" />
         <div style={{ height: 12 }} />
         <Skeleton height="72px" />
@@ -99,7 +99,7 @@ export default function EditTask() {
 
   return (
     <Screen>
-      <Header title="Edit Task" onBack={() => navigate(-1)} />
+      <Header title="Edit task" onBack={() => navigate(-1)} />
 
       <Input
         label="Task name"
@@ -151,13 +151,13 @@ export default function EditTask() {
         <textarea
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
-          placeholder="Add any extra details here..."
+          placeholder="e.g. Filter size 20x25x1"
           rows={4}
         />
       </div>
 
       {error && (
-        <div className="auth-error" role="alert">
+        <div className="form-error" role="alert">
           {error}
         </div>
       )}

@@ -33,6 +33,7 @@ export default function AttachmentsSection({
   const [deleting, setDeleting] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState('');
   const [toastVisible, setToastVisible] = useState(false);
+  const [toastTone, setToastTone] = useState<'default' | 'error'>('default');
 
   useEffect(() => {
     void load();
@@ -41,19 +42,17 @@ export default function AttachmentsSection({
   const load = async () => {
     setLoading(true);
     const list = await listApplianceFiles(applianceId);
-    console.log('[Attachments] loaded', list.length, 'files for', applianceId);
     setFiles(list);
     setLoading(false);
   };
 
-  const showToast = (msg: string) => {
-    console.log('[Attachments] toast:', msg);
+  const showToast = (msg: string, tone: 'default' | 'error' = 'default') => {
     setToastMessage(msg);
+    setToastTone(tone);
     setToastVisible(true);
   };
 
   const handlePick = () => {
-    console.log('[Attachments] pick clicked');
     inputRef.current?.click();
   };
 
@@ -61,10 +60,8 @@ export default function AttachmentsSection({
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
     const file = e.target.files?.[0];
-    console.log('[Attachments] onChange fired, file:', file?.name, file?.type, file?.size);
     e.target.value = '';
     if (!file) {
-      console.log('[Attachments] no file selected');
       return;
     }
 
@@ -76,13 +73,11 @@ export default function AttachmentsSection({
       file
     );
 
-    console.log('[Attachments] upload result:', { uploaded, error });
-
     setUploading(false);
     setUploadProgress('');
 
     if (error || !uploaded) {
-      showToast(error ?? 'Upload failed');
+      showToast(error ?? 'Upload failed', 'error');
       return;
     }
 
@@ -95,7 +90,7 @@ export default function AttachmentsSection({
   const handleOpen = async (file: ApplianceFile) => {
     const url = await getSignedUrl(file.path, 3600);
     if (!url) {
-      showToast('Could not open file');
+      showToast('Could not open file', 'error');
       return;
     }
     window.open(url, '_blank', 'noopener,noreferrer');
@@ -110,7 +105,7 @@ export default function AttachmentsSection({
     setDeleting(null);
 
     if (error) {
-      showToast('Could not delete');
+      showToast('Could not delete', 'error');
       return;
     }
 
@@ -229,6 +224,7 @@ export default function AttachmentsSection({
       <Toast
         message={toastMessage}
         visible={toastVisible}
+        tone={toastTone}
         onHide={() => setToastVisible(false)}
       />
     </div>

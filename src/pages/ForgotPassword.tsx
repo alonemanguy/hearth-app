@@ -7,6 +7,7 @@ import Input from '../components/Input';
 import Button from '../components/Button';
 import { supabase } from '../lib/supabase';
 import { easings } from '../lib/motion';
+import { Icon } from '../lib/icons';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -55,21 +56,8 @@ export default function ForgotPassword() {
           transition={{ duration: 0.5, ease: easings.easeOutExpo }}
           style={{ textAlign: 'center', paddingTop: 24 }}
         >
-          <div
-            style={{
-              width: 72,
-              height: 72,
-              borderRadius: '50%',
-              background: 'rgba(46, 125, 50, 0.1)',
-              color: '#2E7D32',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              margin: '0 auto 20px',
-              fontSize: 32,
-            }}
-          >
-            ✉️
+          <div className="auth-success-icon">
+            <Icon name="mail" size={32} strokeWidth={1.6} />
           </div>
           <h2 className="auth-title" style={{ marginBottom: 12 }}>
             Check your inbox

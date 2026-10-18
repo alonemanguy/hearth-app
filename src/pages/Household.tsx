@@ -39,6 +39,7 @@ export default function Household() {
   const [error, setError] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState('');
   const [toastVisible, setToastVisible] = useState(false);
+  const [toastTone, setToastTone] = useState<'default' | 'error'>('default');
 
   useEffect(() => {
     if (!user) return;
@@ -61,8 +62,9 @@ export default function Household() {
     setLoading(false);
   };
 
-  const showToast = (msg: string) => {
+  const showToast = (msg: string, tone: 'default' | 'error' = 'default') => {
     setToastMessage(msg);
+    setToastTone(tone);
     setToastVisible(true);
   };
 
@@ -121,7 +123,7 @@ export default function Household() {
       await navigator.clipboard.writeText(household.invite_code);
       showToast('Code copied');
     } catch {
-      showToast('Copy failed');
+      showToast('Copy failed', 'error');
     }
   };
 
@@ -143,7 +145,7 @@ export default function Household() {
       <Header title="Household" onBack={() => navigate('/profile')} />
 
       {error && (
-        <div className="auth-error" role="alert">
+        <div className="form-error" role="alert">
           {error}
         </div>
       )}
@@ -333,15 +335,21 @@ export default function Household() {
                   >
                     <Card className="household-member-card">
                       <div className="household-member-avatar">
-                        {initial}
+                        {isYou ? initial : <Icon name="household" size={18} />}
                       </div>
                       <div className="household-member-info">
                         <div className="household-member-name">
-                          {isYou ? 'You' : 'Member'}
+                          {isYou
+                            ? 'You'
+                            : m.role === 'owner'
+                              ? 'Owner'
+                              : 'Household member'}
                         </div>
-                        <div className="household-member-role">
-                          {m.role === 'owner' ? 'Owner' : 'Member'}
-                        </div>
+                        {isYou && (
+                          <div className="household-member-role">
+                            {m.role === 'owner' ? 'Owner' : 'Member'}
+                          </div>
+                        )}
                       </div>
                     </Card>
                   </motion.div>
@@ -369,6 +377,7 @@ export default function Household() {
       <Toast
         message={toastMessage}
         visible={toastVisible}
+        tone={toastTone}
         onHide={() => setToastVisible(false)}
       />
     </Screen>

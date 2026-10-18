@@ -45,8 +45,8 @@ export default function Profile() {
   const emailInitial = user?.email?.[0]?.toUpperCase() ?? '?';
 
   const rows: Row[] = [
-    { icon: 'home', label: 'My Home', to: '/property' },
-    { icon: 'appliance', label: 'My Appliances', to: '/appliances' },
+    { icon: 'home', label: 'My home', to: '/property' },
+    { icon: 'appliance', label: 'My appliances', to: '/appliances' },
     { icon: 'warranty', label: 'Warranties', to: '/warranties' },
     { icon: 'household', label: 'Household', to: '/household' },
     { icon: 'bell', label: 'Notifications', to: '/notification-preferences' },

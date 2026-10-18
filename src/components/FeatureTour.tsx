@@ -12,9 +12,9 @@ type Slide = {
 
 const SLIDES: Slide[] = [
   {
-    icon: 'sparkles',
+    icon: 'home',
     title: 'Welcome to Hearth',
-    body: 'Here\u2019s a quick look at what the app does — 30 seconds, we promise.',
+    body: 'Task reminders, appliance records, warranty dates. Here is where each one lives.',
   },
   {
     icon: 'wrench',

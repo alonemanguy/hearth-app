@@ -92,16 +92,8 @@ export async function uploadApplianceFile(
   applianceId: string,
   file: File
 ): Promise<{ file: ApplianceFile | null; error: string | null }> {
-  console.log('[uploads] starting upload:', {
-    applianceId,
-    name: file.name,
-    type: file.type,
-    size: file.size,
-  });
-
   const check = isAllowedFile(file);
   if (!check.ok) {
-    console.log('[uploads] rejected:', check.error);
     return { file: null, error: check.error ?? 'File not allowed.' };
   }
 
@@ -111,8 +103,6 @@ export async function uploadApplianceFile(
     .slice(0, 80);
   const filename = `${timestamp}-${safeName}`;
   const path = `${applianceId}/${filename}`;
-
-  console.log('[uploads] uploading to path:', path);
 
   const { error } = await supabase.storage.from(BUCKET).upload(path, file, {
     cacheControl: '3600',
@@ -124,8 +114,6 @@ export async function uploadApplianceFile(
     console.error('[uploads] upload error:', error);
     return { file: null, error: error.message ?? 'Upload failed.' };
   }
-
-  console.log('[uploads] upload succeeded');
 
   return {
     file: {

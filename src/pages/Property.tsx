@@ -31,6 +31,7 @@ export default function Property() {
   const [property, setProperty] = useState<PropertyType | null>(null);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const [nickname, setNickname] = useState('');
   const [address, setAddress] = useState('');
@@ -95,6 +96,7 @@ export default function Property() {
   const handleSave = async () => {
     if (!user || !nickname.trim()) return;
 
+    setSaveError(null);
     setSaving(true);
 
     const payload = {
@@ -136,7 +138,7 @@ export default function Property() {
 
     if (result.error) {
       console.error('Error saving property:', result.error);
-      alert('Could not save. Please try again.');
+      setSaveError('Could not save. Check your connection and try again.');
       return;
     }
 
@@ -156,7 +158,7 @@ export default function Property() {
   if (loading) {
     return (
       <Screen>
-        <Header title="My Home" onBack={() => navigate('/profile')} />
+        <Header title="My home" onBack={() => navigate('/profile')} />
         <Skeleton height="80px" />
         <div style={{ height: 16 }} />
         <Skeleton height="200px" />
@@ -168,7 +170,7 @@ export default function Property() {
     return (
       <Screen>
         <Header
-          title={property ? 'Edit Home' : 'Add Your Home'}
+          title={property ? 'Edit home' : 'Add your home'}
           onBack={handleCancel}
         />
 
@@ -286,8 +288,14 @@ export default function Property() {
             />
           </div>
 
+          {saveError && (
+            <div className="form-error" role="alert">
+              {saveError}
+            </div>
+          )}
+
           <Button onClick={handleSave} disabled={!nickname.trim() || saving}>
-            {saving ? 'Saving...' : property ? 'Save Changes' : 'Create Home'}
+            {saving ? 'Saving...' : property ? 'Save changes' : 'Create home'}
           </Button>
 
           {property && (
@@ -303,11 +311,11 @@ export default function Property() {
   if (!property) {
     return (
       <Screen>
-        <Header title="My Home" onBack={() => navigate('/profile')} />
+        <Header title="My home" onBack={() => navigate('/profile')} />
         <EmptyState
           icon="home"
           title="No home added yet"
-          body="Add your home to start tracking appliances, warranties, and value."
+          body="Add your home to start tracking appliances and warranties."
           ctaLabel="Add your home"
           onCta={() => setEditing(true)}
         />
@@ -326,7 +334,7 @@ export default function Property() {
 
   return (
     <Screen>
-      <Header title="My Home" onBack={() => navigate('/profile')} />
+      <Header title="My home" onBack={() => navigate('/profile')} />
 
       <motion.div
         initial={reduce ? false : { opacity: 0, y: 12 }}
