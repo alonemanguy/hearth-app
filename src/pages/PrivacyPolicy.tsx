@@ -14,7 +14,7 @@ export default function PrivacyPolicy() {
         <p>
           Hearth ("we", "us", "our") provides a home maintenance app. This
           policy explains what data we collect, how we use it, and your rights.
-          We take this seriously — your home is private.
+          We take this seriously. Your home is private.
         </p>
 
         <h2>1. Who we are</h2>
@@ -27,32 +27,32 @@ export default function PrivacyPolicy() {
         <p>We collect only what is needed to run Hearth.</p>
         <ul>
           <li>
-            <strong>Account data</strong> — email address, password (hashed with
+            <strong>Account data</strong>: email address, password (hashed with
             bcrypt, never visible to us), and your help-level preference.
           </li>
           <li>
-            <strong>Home data (yours, private to you)</strong> — property
+            <strong>Home data (yours, private to you)</strong>: property
             details you enter, appliance details, tasks, notes, warranty dates,
             and notification preferences.
           </li>
           <li>
-            <strong>Device data (for push)</strong> — a push subscription
+            <strong>Device data (for push)</strong>: a push subscription
             endpoint, encryption keys, and a user-agent string to identify your
             device.
           </li>
           <li>
-            <strong>Technical data</strong> — basic server logs (IP, timestamp,
+            <strong>Technical data</strong>: basic server logs (IP, timestamp,
             retained up to 90 days) and anonymized error logs.
           </li>
         </ul>
         <p>
           We do <strong>not</strong> collect: location, contacts, photos,
-          browsing history, biometric data, or any third-party tracking.
+          browsing history, biometric data, or advertising trackers.
         </p>
 
         <h2>3. How we use your data</h2>
         <ul>
-          <li>Provide the core app — tasks, reminders, appliances.</li>
+          <li>Provide the core app: tasks, reminders, appliances.</li>
           <li>Send the notifications you asked for.</li>
           <li>Respond to support requests.</li>
           <li>Detect and fix bugs.</li>
@@ -66,13 +66,13 @@ export default function PrivacyPolicy() {
         <p>If you are in the EU or UK, we rely on:</p>
         <ul>
           <li>
-            <strong>Contract</strong> — to provide the app you signed up for.
+            <strong>Contract</strong>: to provide the app you signed up for.
           </li>
           <li>
-            <strong>Consent</strong> — for push notifications.
+            <strong>Consent</strong>: for push notifications.
           </li>
           <li>
-            <strong>Legitimate interest</strong> — for security and abuse
+            <strong>Legitimate interest</strong>: for security and abuse
             prevention.
           </li>
         </ul>
@@ -84,17 +84,22 @@ export default function PrivacyPolicy() {
         </p>
         <ul>
           <li>
-            <strong>Supabase</strong> — database and authentication.
+            <strong>Supabase</strong>: database and authentication.
           </li>
           <li>
-            <strong>Vercel</strong> — application hosting.
+            <strong>Vercel</strong>: application hosting.
           </li>
           <li>
-            <strong>Google Firebase Cloud Messaging</strong> — push notification
+            <strong>Google Firebase Cloud Messaging</strong>: push notification
             delivery.
           </li>
           <li>
-            <strong>Sentry</strong> — anonymized error monitoring.
+            <strong>Sentry</strong>: anonymized error monitoring.
+          </li>
+          <li>
+            <strong>PostHog</strong>: product analytics. Loaded only after you
+            accept analytics cookies. Configured without cross-site advertising
+            tracking.
           </li>
         </ul>
         <p>We never sell your data or share it with advertisers.</p>
@@ -103,19 +108,19 @@ export default function PrivacyPolicy() {
         <p>You can, at any time:</p>
         <ul>
           <li>
-            <strong>Access</strong> your data — export it from Settings.
+            <strong>Access</strong> your data. Export it from Settings.
           </li>
           <li>
-            <strong>Delete</strong> your account — permanent and immediate.
+            <strong>Delete</strong> your account. Permanent and immediate.
           </li>
           <li>
-            <strong>Correct</strong> your data — edit anytime in the app.
+            <strong>Correct</strong> your data. Edit anytime in the app.
           </li>
           <li>
-            <strong>Port</strong> your data — export as JSON.
+            <strong>Port</strong> your data. Export as JSON.
           </li>
           <li>
-            <strong>Object</strong> to processing — contact us.
+            <strong>Object</strong> to processing. Contact us.
           </li>
         </ul>
         <p>
@@ -125,9 +130,9 @@ export default function PrivacyPolicy() {
 
         <h2>7. How long we keep data</h2>
         <ul>
-          <li>Active accounts — kept while you use Hearth.</li>
-          <li>Deleted accounts — wiped within 30 days.</li>
-          <li>Server logs — retained up to 90 days.</li>
+          <li>Active accounts: kept while you use Hearth.</li>
+          <li>Deleted accounts: wiped within 30 days.</li>
+          <li>Server logs: retained up to 90 days.</li>
         </ul>
 
         <h2>8. Security</h2>

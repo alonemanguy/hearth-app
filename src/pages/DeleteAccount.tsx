@@ -65,7 +65,7 @@ export default function DeleteAccount() {
 
   return (
     <Screen>
-      <Header title="Delete Account" onBack={() => navigate('/settings')} />
+      <Header title="Delete account" onBack={() => navigate('/settings')} />
 
       <div className="delete-warning">
         <div className="delete-warning-icon">
@@ -98,7 +98,7 @@ export default function DeleteAccount() {
       </Card>
 
       {error && (
-        <div className="auth-error" style={{ marginTop: 16 }} role="alert">
+        <div className="form-error" style={{ marginTop: 16 }} role="alert">
           {error}
         </div>
       )}

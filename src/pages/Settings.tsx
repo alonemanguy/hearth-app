@@ -27,9 +27,11 @@ export default function Settings() {
   const [exporting, setExporting] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastVisible, setToastVisible] = useState(false);
+  const [toastTone, setToastTone] = useState<'default' | 'error'>('default');
 
-  const showToast = (msg: string) => {
+  const showToast = (msg: string, tone: 'default' | 'error' = 'default') => {
     setToastMessage(msg);
+    setToastTone(tone);
     setToastVisible(true);
   };
 
@@ -40,7 +42,7 @@ export default function Settings() {
     setExporting(false);
 
     if (error || !data) {
-      showToast(error ?? 'Export failed');
+      showToast(error ?? 'Export failed', 'error');
       return;
     }
 
@@ -131,7 +133,7 @@ export default function Settings() {
       </div>
 
       <div className="settings-section">
-        <div className="settings-section-title">Privacy &amp; Data</div>
+        <div className="settings-section-title">Privacy and data</div>
         <Card>{privacyRows.map(renderRow)}</Card>
       </div>
 
@@ -162,6 +164,7 @@ export default function Settings() {
       <Toast
         message={toastMessage}
         visible={toastVisible}
+        tone={toastTone}
         onHide={() => setToastVisible(false)}
       />
     </Screen>

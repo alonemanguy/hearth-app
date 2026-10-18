@@ -362,11 +362,19 @@ export default function Home() {
   };
 
   const openCount = tasks.filter((t) => t.status !== 'done').length;
-  const activeCount = openCount;
+  const weekAhead = Date.now() + 7 * 86400000;
+  // The summary card says "due this week", so the number has to mean that:
+  // open tasks falling on or before seven days from today, overdue included.
+  const activeCount = tasks.filter(
+    (t) => t.status !== 'done' && new Date(t.due_date).getTime() <= weekAhead
+  ).length;
   const emptyCopy = EMPTY_COPY[helpLevel];
 
   const greetingName = displayName?.trim() || 'there';
-  const greeting = `Good morning, ${greetingName}`;
+  const hour = new Date().getHours();
+  const partOfDay =
+    hour < 12 ? 'morning' : hour < 18 ? 'afternoon' : 'evening';
+  const greeting = `Good ${partOfDay}, ${greetingName}`;
 
   const applianceById = Object.fromEntries(appliances.map((a) => [a.id, a]));
 
@@ -466,9 +474,9 @@ export default function Home() {
             >
               <Icon name="close" size={16} />
             </button>
-            <div className="home-welcome-title">Hearth gets useful fast</div>
+            <div className="home-welcome-title">Start with one</div>
             <div className="home-welcome-sub">
-              Start with one of these — takes less than a minute.
+              Add an appliance or a task now. The rest can wait.
             </div>
             <div className="home-welcome-actions">
               <button
@@ -499,7 +507,7 @@ export default function Home() {
                 type="button"
               >
                 <span className="home-welcome-action-icon">
-                  <Icon name="sparkles" size={18} />
+                  <Icon name="checkCircle" size={18} />
                 </span>
                 <span>See Home Health</span>
                 <Icon name="chevronRight" size={16} />
@@ -641,11 +649,7 @@ export default function Home() {
             delay: reduce ? 0 : 0.05,
           }}
         >
-          <Card
-            className="health-preview"
-            onClick={() => navigate('/health')}
-            style={{ borderLeft: `3px solid ${healthColor}` }}
-          >
+          <Card className="health-preview" onClick={() => navigate('/health')}>
             <ScoreRing
               score={health.total}
               size={56}
@@ -683,20 +687,20 @@ export default function Home() {
         >
           <Card className="health-starting" onClick={() => navigate('/health')}>
             <div className="health-starting-icon">
-              <Icon name="sparkles" size={22} />
+              <Icon name="checkCircle" size={22} />
             </div>
             <div className="health-starting-body">
               <div className="health-starting-eyebrow">HOME HEALTH</div>
-              <div className="health-starting-title">Just getting started</div>
+              <div className="health-starting-title">Not enough to score yet</div>
               <div className="health-starting-sub">
-                Add a few appliances and tasks to unlock your home's score.
+                The score needs at least three items. An appliance, a task, or a
+                warranty date all count.
               </div>
             </div>
             <Icon name="chevronRight" size={20} />
           </Card>
           <p className="health-explainer">
-            Home Health goes up as you add appliances, track warranties, and
-            complete tasks.
+            Counts what you have documented, covered, and finished.
           </p>
         </motion.div>
       )}
@@ -714,7 +718,7 @@ export default function Home() {
             <Skeleton width="140px" height="16px" radius="8px" />
           </Card>
           <div className="section">
-            <h2 className="section-title">Upcoming Tasks</h2>
+            <h2 className="section-title">Upcoming tasks</h2>
             <Card>
               <Skeleton height="56px" />
               <div style={{ height: 12 }} />
@@ -776,7 +780,7 @@ export default function Home() {
           </Card>
 
           <div className="section">
-            <h2 className="section-title">Upcoming Tasks</h2>
+            <h2 className="section-title">Upcoming tasks</h2>
             <Card>
               <motion.div
                 variants={listContainer}
@@ -811,9 +815,9 @@ export default function Home() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, ease: easings.easeOutExpo }}
         >
-          <h2 className="section-title">Suggested for you</h2>
+          <h2 className="section-title">Suggested tasks</h2>
           <p className="section-sub">
-            Common tasks for the appliances you've added.
+            Tap to add one. You can change the due date later.
           </p>
           <div className="suggestions-list">
             {suggestions.map((item, i) => (
@@ -868,7 +872,7 @@ export default function Home() {
         >
           <div className="section-header-row">
             <h2 className="section-title" style={{ marginBottom: 0 }}>
-              My Appliances
+              My appliances
             </h2>
             <button
               className="section-action"
@@ -892,7 +896,7 @@ export default function Home() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease: easings.easeOutExpo, delay: 0.3 }}
         >
-          <h2 className="section-title">Common next</h2>
+          <h2 className="section-title">Common appliances</h2>
           <p className="section-sub">
             Most homes have these. Tap to add one.
           </p>
@@ -904,7 +908,9 @@ export default function Home() {
                   key={c.key}
                   type="button"
                   className="common-appliance-chip"
-                  onClick={() => navigate('/appliance/new')}
+                  onClick={() =>
+                    navigate(`/appliance/new?category=${c.category}`)
+                  }
                 >
                   <CategoryIcon size={18} strokeWidth={1.8} />
                   <span>{c.label}</span>

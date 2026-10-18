@@ -60,6 +60,7 @@ export default function Warranties() {
 
   const [loading, setLoading] = useState(true);
   const [appliances, setAppliances] = useState<Appliance[]>([]);
+  const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -68,6 +69,7 @@ export default function Warranties() {
 
   const fetchAll = async () => {
     setLoading(true);
+    setLoadError(false);
     const { data, error } = await supabase
       .from('appliances')
       .select('*')
@@ -75,6 +77,7 @@ export default function Warranties() {
 
     if (error) {
       console.error('Error fetching appliances:', error);
+      setLoadError(true);
       setLoading(false);
       return;
     }
@@ -92,6 +95,21 @@ export default function Warranties() {
         <Skeleton height="80px" />
         <div style={{ height: 12 }} />
         <Skeleton height="80px" />
+      </Screen>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <Screen>
+        <Header title="Warranties" onBack={() => navigate('/profile')} />
+        <EmptyState
+          icon="alert"
+          title="Couldn't load warranties"
+          body="Check your connection and try again."
+          ctaLabel="Retry"
+          onCta={fetchAll}
+        />
       </Screen>
     );
   }

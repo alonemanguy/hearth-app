@@ -21,6 +21,7 @@ export default function Add() {
   const [repeat, setRepeat] = useState('once');
   const [notes, setNotes] = useState('');
   const [toastVisible, setToastVisible] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [appliances, setAppliances] = useState<Appliance[]>([]);
 
@@ -62,6 +63,7 @@ export default function Add() {
   };
 
   const handleSave = async () => {
+    setSaveError(null);
     setSaving(true);
 
     const {
@@ -69,7 +71,7 @@ export default function Add() {
     } = await supabase.auth.getUser();
     if (!user) {
       setSaving(false);
-      alert('Not signed in.');
+      setSaveError('Your session ended. Sign in again to save.');
       return;
     }
 
@@ -105,7 +107,7 @@ export default function Add() {
 
     if (error) {
       console.error('Error saving task:', error);
-      alert('Could not save task. Please try again.');
+      setSaveError('Could not save. Check your connection and try again.');
       return;
     }
 
@@ -116,7 +118,7 @@ export default function Add() {
   if (loading) {
     return (
       <Screen>
-        <Header title="Edit Task" onBack={() => navigate(-1)} />
+        <Header title="Edit task" onBack={() => navigate(-1)} />
         <Skeleton height="48px" />
         <div style={{ height: 16 }} />
         <Skeleton height="48px" />
@@ -129,7 +131,7 @@ export default function Add() {
   return (
     <Screen>
       <Header
-        title={isEdit ? 'Edit Task' : 'New Task'}
+        title={isEdit ? 'Edit task' : 'New task'}
         onBack={() => navigate(-1)}
       />
 
@@ -185,16 +187,22 @@ export default function Add() {
         <textarea
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
-          placeholder="Add any extra details here..."
+          placeholder="e.g. Filter size 20x25x1"
           rows={4}
         />
       </div>
+
+      {saveError && (
+        <div className="form-error" role="alert">
+          {saveError}
+        </div>
+      )}
 
       <Button
         onClick={handleSave}
         disabled={!taskName || !dueDate || saving}
       >
-        {saving ? 'Saving...' : isEdit ? 'Save changes' : 'Save Task'}
+        {saving ? 'Saving...' : isEdit ? 'Save changes' : 'Save task'}
       </Button>
 
       <Toast

@@ -22,6 +22,7 @@ export default function Appliances() {
 
   const [loading, setLoading] = useState(true);
   const [appliances, setAppliances] = useState<Appliance[]>([]);
+  const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
     void fetchAppliances();
@@ -29,6 +30,7 @@ export default function Appliances() {
 
   const fetchAppliances = async () => {
     setLoading(true);
+    setLoadError(false);
     const { data, error } = await supabase
       .from('appliances')
       .select('*')
@@ -36,6 +38,7 @@ export default function Appliances() {
 
     if (error) {
       console.error('Error fetching appliances:', error);
+      setLoadError(true);
       setLoading(false);
       return;
     }
@@ -65,6 +68,21 @@ export default function Appliances() {
         <Skeleton height="72px" />
         <div style={{ height: 12 }} />
         <Skeleton height="72px" />
+      </Screen>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <Screen>
+        <Header title="Appliances" onBack={() => navigate('/profile')} />
+        <EmptyState
+          icon="alert"
+          title="Couldn't load appliances"
+          body="Check your connection and try again."
+          ctaLabel="Retry"
+          onCta={fetchAppliances}
+        />
       </Screen>
     );
   }

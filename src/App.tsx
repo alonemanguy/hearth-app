@@ -7,6 +7,7 @@ import {
 } from 'react-router-dom';
 import { AuthProvider, useAuth } from './lib/auth';
 import Home from './pages/Home';
+import HomeHealth from './pages/HomeHealth';
 import Add from './pages/Add';
 import Detail from './pages/Detail';
 import EditTask from './pages/EditTask';
@@ -110,6 +111,7 @@ function AppRoutes() {
         <Route path="/appliances" element={<Appliances />} />
         <Route path="/appliance/:id" element={<ApplianceDetail />} />
         <Route path="/warranties" element={<Warranties />} />
+        <Route path="/health" element={<HomeHealth />} />
         <Route path="/household" element={<Household />} />
         <Route path="/notifications" element={<Notifications />} />
         <Route

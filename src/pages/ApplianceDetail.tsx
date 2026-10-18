@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { motion, useReducedMotion } from 'motion/react';
 import Screen from '../components/Screen';
 import Header from '../components/Header';
@@ -8,9 +8,15 @@ import Button from '../components/Button';
 import Input from '../components/Input';
 import Skeleton from '../components/Skeleton';
 import AttachmentsSection from '../components/AttachmentsSection';
+import MaintenanceTemplates from '../components/MaintenanceTemplates';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
 import { easings } from '../lib/motion';
+import {
+  addDays,
+  getMaintenanceTemplates,
+  toISODate,
+} from '../lib/suggestions';
 import {
   Appliance,
   ApplianceCategory,
@@ -29,6 +35,7 @@ const CATEGORIES: ApplianceCategory[] = [
 export default function ApplianceDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const reduce = useReducedMotion();
 
@@ -38,9 +45,15 @@ export default function ApplianceDetail() {
   const [appliance, setAppliance] = useState<Appliance | null>(null);
   const [editing, setEditing] = useState(isNew);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const [name, setName] = useState('');
-  const [category, setCategory] = useState<ApplianceCategory>('appliance');
+  const [category, setCategory] = useState<ApplianceCategory>(() => {
+    const param = searchParams.get('category');
+    return CATEGORIES.includes(param as ApplianceCategory)
+      ? (param as ApplianceCategory)
+      : 'appliance';
+  });
   const [make, setMake] = useState('');
   const [model, setModel] = useState('');
   const [serial, setSerial] = useState('');
@@ -49,6 +62,7 @@ export default function ApplianceDetail() {
   const [warrantyExpires, setWarrantyExpires] = useState('');
   const [lifespan, setLifespan] = useState('');
   const [notes, setNotes] = useState('');
+  const [templateIds, setTemplateIds] = useState<string[]>([]);
 
   useEffect(() => {
     if (isNew) return;
@@ -87,9 +101,26 @@ export default function ApplianceDetail() {
     setNotes(a.notes ?? '');
   };
 
+  const chooseCategory = (c: ApplianceCategory) => {
+    setCategory(c);
+    // Drop picks that belonged to the previous category.
+    setTemplateIds((ids) =>
+      ids.filter((tid) =>
+        getMaintenanceTemplates(c).some((t) => t.id === tid)
+      )
+    );
+  };
+
+  const toggleTemplate = (tid: string) => {
+    setTemplateIds((ids) =>
+      ids.includes(tid) ? ids.filter((x) => x !== tid) : [...ids, tid]
+    );
+  };
+
   const handleSave = async () => {
     if (!user || !name.trim()) return;
 
+    setSaveError(null);
     setSaving(true);
 
     const payload = {
@@ -123,30 +154,62 @@ export default function ApplianceDetail() {
         .single();
     }
 
-    setSaving(false);
-
     if (result.error) {
       console.error('Error saving appliance:', result.error);
-      alert('Could not save. Please try again.');
+      setSaving(false);
+      setSaveError('Could not save. Check your connection and try again.');
       return;
     }
 
+    // Schedule the picked maintenance templates. If this fails the
+    // appliance is already saved, so keep the picks: saving again retries.
+    let taskError: { message: string } | null = null;
+    const rows = getMaintenanceTemplates(category)
+      .filter((t) => templateIds.includes(t.id))
+      .map((t) => ({
+        user_id: user.id,
+        appliance_id: result.data.id,
+        appliance: result.data.name,
+        title: t.title,
+        due_date: toISODate(addDays(new Date(), t.dueInDays)),
+        repeat: t.repeat,
+        status: 'due',
+        notes: null,
+      }));
+
+    if (rows.length > 0) {
+      const { error } = await supabase.from('tasks').insert(rows);
+      taskError = error;
+      if (error) {
+        console.error('Error scheduling maintenance tasks:', error);
+      } else {
+        setTemplateIds([]);
+      }
+    }
+
+    setSaving(false);
     setAppliance(result.data);
     setEditing(false);
     if (isNew) navigate(`/appliance/${result.data.id}`, { replace: true });
+    if (taskError) {
+      setSaveError(
+        'Appliance saved, but its maintenance tasks were not scheduled. Edit the appliance and save again to retry.'
+      );
+    }
   };
 
   const handleDelete = async () => {
     if (!appliance) return;
     if (!confirm(`Delete "${appliance.name}"? This cannot be undone.`)) return;
 
+    setSaveError(null);
     const { error } = await supabase
       .from('appliances')
       .delete()
       .eq('id', appliance.id);
     if (error) {
       console.error('Error deleting:', error);
-      alert('Could not delete.');
+      setSaveError('Could not delete. Try again in a moment.');
       return;
     }
     navigate('/appliances');
@@ -176,9 +239,14 @@ export default function ApplianceDetail() {
     return (
       <Screen>
         <Header
-          title={appliance ? 'Edit Appliance' : 'New Appliance'}
+          title={appliance ? 'Edit appliance' : 'New appliance'}
           onBack={handleCancel}
         />
+        {saveError && (
+          <div className="form-error" role="alert">
+            {saveError}
+          </div>
+        )}
         <motion.div
           initial={reduce ? false : { opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -203,7 +271,7 @@ export default function ApplianceDetail() {
                     className={`category-chip ${
                       category === c ? 'category-chip--active' : ''
                     }`}
-                    onClick={() => setCategory(c)}
+                    onClick={() => chooseCategory(c)}
                   >
                     <CategoryIcon size={22} strokeWidth={1.8} />
                     <span className="category-chip-label">
@@ -214,6 +282,14 @@ export default function ApplianceDetail() {
               })}
             </div>
           </div>
+
+          {(isNew || templateIds.length > 0) && (
+            <MaintenanceTemplates
+              category={category}
+              selected={templateIds}
+              onToggle={toggleTemplate}
+            />
+          )}
 
           <div className="input-row">
             <Input
@@ -278,7 +354,7 @@ export default function ApplianceDetail() {
           </div>
 
           <Button onClick={handleSave} disabled={!name.trim() || saving}>
-            {saving ? 'Saving...' : appliance ? 'Save Changes' : 'Add Appliance'}
+            {saving ? 'Saving...' : appliance ? 'Save changes' : 'Add appliance'}
           </Button>
 
           {appliance && (
@@ -303,6 +379,12 @@ export default function ApplianceDetail() {
   return (
     <Screen>
       <Header title="Appliance" onBack={() => navigate('/appliances')} />
+
+      {saveError && (
+        <div className="form-error" role="alert">
+          {saveError}
+        </div>
+      )}
 
       <motion.div
         initial={reduce ? false : { opacity: 0, y: 12 }}
@@ -395,9 +477,14 @@ export default function ApplianceDetail() {
         <AttachmentsSection applianceId={appliance.id} editable />
 
         <div className="action-buttons">
-          <Button onClick={() => setEditing(true)}>
+          <Button
+            onClick={() => {
+              setSaveError(null);
+              setEditing(true);
+            }}
+          >
             <Icon name="edit" size={16} />
-            Edit Appliance
+            Edit appliance
           </Button>
         </div>
       </motion.div>

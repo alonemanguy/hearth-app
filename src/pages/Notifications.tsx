@@ -69,9 +69,9 @@ export default function Notifications() {
       <Screen>
         <Header title="Notifications" onBack={() => navigate('/')} />
         <EmptyState
-          icon="sparkles"
-          title="All caught up"
-          body="No tasks need your attention right now. We'll let you know when something's due."
+          icon="bell"
+          title="Nothing due"
+          body="No task needs your attention right now. You'll get a notification when one is due."
         />
       </Screen>
     );

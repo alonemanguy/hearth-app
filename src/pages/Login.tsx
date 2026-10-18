@@ -38,8 +38,8 @@ export function Login() {
     if (!password) {
       setPasswordError('Password is required');
       ok = false;
-    } else if (password.length < 6) {
-      setPasswordError('Password must be at least 6 characters');
+    } else if (password.length < 12) {
+      setPasswordError('Password must be at least 12 characters');
       ok = false;
     } else {
       setPasswordError(null);
@@ -124,7 +124,7 @@ export function Login() {
             type="password"
             value={password}
             onChange={setPassword}
-            placeholder={isSignUp ? 'At least 6 characters' : 'Your password'}
+            placeholder={isSignUp ? 'At least 12 characters' : 'Your password'}
             error={passwordError}
             autoComplete={isSignUp ? 'new-password' : 'current-password'}
             required

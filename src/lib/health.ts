@@ -152,27 +152,27 @@ function categorize(total: number): {
     return {
       category: 'excellent',
       label: 'Excellent',
-      blurb: 'Your home is in great hands.',
+      blurb: 'Records are current, and nothing is overdue.',
     };
   }
   if (total >= 70) {
     return {
       category: 'good',
       label: 'Good',
-      blurb: 'Solid care — a few improvements left.',
+      blurb: 'Mostly current. A couple of gaps in the records.',
     };
   }
   if (total >= 50) {
     return {
       category: 'fair',
       label: 'Fair',
-      blurb: 'Your home deserves a bit more attention.',
+      blurb: 'Some tasks have slipped and a few records are missing.',
     };
   }
   return {
     category: 'needs_work',
     label: 'Needs work',
-    blurb: 'Let\u2019s get your home back on track.',
+    blurb: 'Behind on tasks, and most records are missing.',
   };
 }
 
@@ -193,7 +193,7 @@ function buildRecommendations(
     recs.push({
       id: 'add-property',
       title: 'Add your home details',
-      body: 'Year built, size, and purchase info unlock a more accurate health score.',
+      body: 'Year built, size, and purchase date make the score more accurate.',
       points: 10,
       linkTo: '/property',
       icon: 'home',
@@ -203,7 +203,7 @@ function buildRecommendations(
       recs.push({
         id: 'add-year',
         title: 'Add your home\u2019s year built',
-        body: 'Helps us predict what needs attention next.',
+        body: 'Counts toward the documentation score.',
         points: 3,
         linkTo: '/property',
         icon: 'calendar',
@@ -213,7 +213,7 @@ function buildRecommendations(
       recs.push({
         id: 'add-address',
         title: 'Add your home address',
-        body: 'Unlocks local contractor recommendations later.',
+        body: 'Kept on file for warranty and service paperwork.',
         points: 3,
         linkTo: '/property',
         icon: 'pin',
@@ -236,7 +236,7 @@ function buildRecommendations(
       recs.push({
         id: 'add-more-appliances',
         title: 'Add more appliances',
-        body: `Document at least 3 appliances to boost your score. You have ${appliances.length}.`,
+        body: `Three documented appliances is where this score starts moving. You have ${appliances.length}.`,
         points: 5,
         linkTo: '/appliance/new',
         icon: 'appliance',
@@ -250,7 +250,7 @@ function buildRecommendations(
       recs.push({
         id: 'add-warranties',
         title: `Track ${missingWarranty} warranty${missingWarranty === 1 ? '' : 'ies'}`,
-        body: 'Never miss an expiration again.',
+        body: 'Add expiry dates so nothing lapses unnoticed.',
         points: Math.min(missingWarranty * 2, 8),
         linkTo: '/appliances',
         icon: 'warranty',
@@ -264,7 +264,7 @@ function buildRecommendations(
       recs.push({
         id: 'add-serials',
         title: 'Record appliance serial numbers',
-        body: 'Makes warranty claims and repairs easier.',
+        body: 'Service calls and claims go faster with the serial on file.',
         points: 3,
         linkTo: '/appliances',
         icon: 'documents',
@@ -278,7 +278,7 @@ function buildRecommendations(
     recs.push({
       id: 'clear-overdue',
       title: `Complete ${overdue} overdue task${overdue === 1 ? '' : 's'}`,
-      body: 'Overdue items take the biggest toll on your score.',
+      body: 'Overdue tasks cost the most points.',
       points: Math.min(overdue * 3, 12),
       linkTo: '/',
       icon: 'alert',
@@ -318,7 +318,7 @@ export function computeHealthReport(
       score: maintenance.score,
       max: maintenance.max,
       icon: 'wrench',
-      hint: 'Keeping on top of tasks',
+      hint: 'What is done on time',
     },
     {
       key: 'warranties',
@@ -326,7 +326,7 @@ export function computeHealthReport(
       score: warranties.score,
       max: warranties.max,
       icon: 'warranty',
-      hint: 'Tracking coverage windows',
+      hint: 'Coverage dates recorded',
     },
     {
       key: 'appliances',
@@ -334,7 +334,7 @@ export function computeHealthReport(
       score: appliancesScore.score,
       max: appliancesScore.max,
       icon: 'appliance',
-      hint: 'Documented and detailed',
+      hint: 'Makes, models, and notes on file',
     },
     {
       key: 'documentation',
@@ -342,7 +342,7 @@ export function computeHealthReport(
       score: documentation.score,
       max: documentation.max,
       icon: 'documents',
-      hint: 'Records and reference info',
+      hint: 'Serial numbers and purchase dates',
     },
   ];
 

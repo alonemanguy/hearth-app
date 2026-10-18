@@ -223,7 +223,7 @@ const SEASONAL_TASKS: Record<Season, SeasonalTask[]> = {
     {
       id: 'summer-ac',
       title: 'Check AC efficiency and filter',
-      reason: 'Peak usage — small issues become big bills.',
+      reason: 'Peak usage. Small issues turn into big bills.',
       repeat: 'yearly',
       icon: 'hvac',
     },
@@ -274,7 +274,7 @@ const SEASONAL_TASKS: Record<Season, SeasonalTask[]> = {
     {
       id: 'fall-heating',
       title: 'Service heating system',
-      reason: 'Before first cold snap — avoid a cold night.',
+      reason: 'Service it before the first cold snap.',
       repeat: 'yearly',
       icon: 'hvac',
     },
@@ -311,7 +311,7 @@ const SEASONAL_TASKS: Record<Season, SeasonalTask[]> = {
     {
       id: 'winter-heating',
       title: 'Check heating system performance',
-      reason: 'Peak load — inefficiency shows up now.',
+      reason: 'Peak load. Inefficiency shows up now.',
       repeat: 'yearly',
       icon: 'hvac',
     },
@@ -369,7 +369,7 @@ function seasonalFocusSuggestion(season: Season): MonthlyFocus | null {
       return {
         id: 'summer-focus',
         title: 'Check your HVAC filter',
-        body: 'Peak usage season \u2014 filters clog faster.',
+        body: 'Peak usage season. Filters clog faster.',
         linkTo: '/add',
         icon: 'hvac',
         tone: 'info',
@@ -412,7 +412,7 @@ export function getMonthlyFocus(
     focus.push({
       id: 'overdue',
       title: `${overdue.length} overdue task${overdue.length === 1 ? '' : 's'}`,
-      body: 'Clear these first \u2014 they drag down your Home Health.',
+      body: 'Clear these first. They cost the most Home Health points.',
       linkTo: '/',
       icon: 'alert',
       tone: 'error',
@@ -466,4 +466,138 @@ export function getMonthlyFocus(
   }
 
   return focus.slice(0, 3);
+}
+
+/* ------------------------------------------------------------------ */
+/* Maintenance templates for the New appliance screen                  */
+/* ------------------------------------------------------------------ */
+
+export type MaintenanceTemplate = {
+  id: string;
+  title: string;
+  repeat: 'monthly' | 'quarterly' | 'yearly';
+  dueInDays: number;
+  reason: string;
+};
+
+const MAINTENANCE_TEMPLATES: Record<
+  ApplianceCategory,
+  MaintenanceTemplate[]
+> = {
+  hvac: [
+    {
+      id: 'tpl-hvac-filter',
+      title: 'Replace air filter',
+      repeat: 'quarterly',
+      dueInDays: 7,
+      reason: 'Most residential filters last about 90 days.',
+    },
+    {
+      id: 'tpl-hvac-tuneup',
+      title: 'Annual heating and cooling tune-up',
+      repeat: 'yearly',
+      dueInDays: 30,
+      reason: 'A spring check catches low refrigerant and dirty coils.',
+    },
+    {
+      id: 'tpl-hvac-drain',
+      title: 'Clear the condensate drain line',
+      repeat: 'yearly',
+      dueInDays: 60,
+      reason: 'A clogged drain is the most common cause of AC leaks.',
+    },
+  ],
+  plumbing: [
+    {
+      id: 'tpl-plumbing-flush',
+      title: 'Flush the water heater',
+      repeat: 'yearly',
+      dueInDays: 14,
+      reason: 'Sediment settles in the tank and raises heating costs.',
+    },
+    {
+      id: 'tpl-plumbing-hoses',
+      title: 'Inspect washing machine hoses',
+      repeat: 'yearly',
+      dueInDays: 21,
+      reason: 'Rubber hoses split with age. Braided ones last longer.',
+    },
+    {
+      id: 'tpl-plumbing-traps',
+      title: 'Check traps and under-sink connections',
+      repeat: 'quarterly',
+      dueInDays: 10,
+      reason: 'Slow drips rot cabinets long before you notice them.',
+    },
+  ],
+  electrical: [
+    {
+      id: 'tpl-electrical-smoke',
+      title: 'Test smoke and CO detectors',
+      repeat: 'monthly',
+      dueInDays: 3,
+      reason: 'Press the test button on every unit in the house.',
+    },
+    {
+      id: 'tpl-electrical-gfci',
+      title: 'Test GFCI outlets',
+      repeat: 'quarterly',
+      dueInDays: 14,
+      reason: 'Kitchen and bathroom outlets should trip and reset cleanly.',
+    },
+    {
+      id: 'tpl-electrical-panel',
+      title: 'Look over the main electrical panel',
+      repeat: 'yearly',
+      dueInDays: 45,
+      reason: 'Scorch marks or warm breakers need an electrician.',
+    },
+  ],
+  appliance: [
+    {
+      id: 'tpl-appliance-coils',
+      title: 'Clean refrigerator coils',
+      repeat: 'yearly',
+      dueInDays: 21,
+      reason: 'Dusty coils make the compressor work harder.',
+    },
+    {
+      id: 'tpl-appliance-filter',
+      title: 'Clear the dishwasher filter',
+      repeat: 'quarterly',
+      dueInDays: 10,
+      reason: 'Food residue is why dishes come out cloudy.',
+    },
+    {
+      id: 'tpl-appliance-dryer',
+      title: 'Clean the dryer vent line',
+      repeat: 'yearly',
+      dueInDays: 30,
+      reason: 'Lint past the trap is a fire risk.',
+    },
+  ],
+  other: [],
+};
+
+export function getMaintenanceTemplates(
+  category: ApplianceCategory
+): MaintenanceTemplate[] {
+  return MAINTENANCE_TEMPLATES[category] ?? [];
+}
+
+/**
+ * Local-date helpers. toISOString() reports in UTC, so near midnight
+ * it can land on the wrong day for the user's timezone.
+ */
+export function addDays(date: Date, days: number): Date {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
+  return next;
+}
+
+export function toISODate(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }

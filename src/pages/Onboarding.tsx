@@ -67,6 +67,7 @@ export default function Onboarding() {
   const [applianceMake, setApplianceMake] = useState('');
   const [applianceModel, setApplianceModel] = useState('');
   const [warrantyExpiry, setWarrantyExpiry] = useState('');
+  const [addedAppliance, setAddedAppliance] = useState(false);
 
   const stepIndex = STEPS.indexOf(step);
   const progressIndex = PROGRESS_STEPS.indexOf(step);
@@ -164,6 +165,7 @@ export default function Onboarding() {
     }
 
     setBusy(false);
+    setAddedAppliance(true);
     goNext();
   };
 
@@ -211,7 +213,7 @@ export default function Onboarding() {
         </motion.div>
         <h1 className="wizard-title">Welcome to Hearth</h1>
         <p className="wizard-subtitle">
-          A few quick questions so we can shape the app around how you live.
+          Four short screens. Then one appliance, and we set its first reminder.
         </p>
       </div>
 
@@ -305,7 +307,7 @@ export default function Onboarding() {
 
       <div className="wizard-actions">
         <Button onClick={goNext} disabled={!ageConfirmed}>
-          I agree — continue
+          Agree and continue
         </Button>
         <button className="wizard-back" onClick={goBack}>
           Back
@@ -326,7 +328,7 @@ export default function Onboarding() {
       <div className="wizard-header">
         <h1 className="wizard-title">Tell us about your home</h1>
         <p className="wizard-subtitle">
-          Just the basics for now — you can fill in more later.
+          Just the basics now. You can fill in the rest later.
         </p>
       </div>
 
@@ -372,7 +374,7 @@ export default function Onboarding() {
       <div className="wizard-header">
         <h1 className="wizard-title">Add your first appliance</h1>
         <p className="wizard-subtitle">
-          We'll set up its first reminder for you automatically.
+          We'll set up its first reminder for you.
         </p>
       </div>
 
@@ -493,7 +495,9 @@ export default function Onboarding() {
         You're all set{firstName.trim() ? `, ${firstName.trim()}` : ''}
       </h1>
       <p className="wizard-subtitle">
-        Hearth is ready. Your first task is already waiting for you.
+        {addedAppliance
+          ? 'Its first reminder is already on your home screen.'
+          : 'Nothing to set up right now. Add an appliance whenever you want to start.'}
       </p>
 
       <div className="wizard-actions">
@@ -509,7 +513,7 @@ export default function Onboarding() {
       <div className="wizard">
         {renderProgress()}
         {error && (
-          <div className="auth-error" role="alert">
+          <div className="form-error" role="alert">
             {error}
           </div>
         )}

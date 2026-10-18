@@ -15,12 +15,12 @@ const OPTIONS: Option[] = [
     value: 'basic',
     title: 'Just the basics',
     body: 'I know my home. Show me the essentials, skip the rest.',
-    icon: 'add',
+    icon: 'check',
   },
   {
     value: 'guided',
     title: 'Guide me',
-    body: 'Teach me as I go. Helpful tips, no overwhelm.',
+    body: 'Teach me as I go. Short tips when a task needs context.',
     icon: 'compass',
   },
   {

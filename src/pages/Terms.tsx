@@ -74,7 +74,7 @@ export default function Terms() {
         <h2>9. Disclaimers</h2>
         <p>Hearth is a home maintenance tracker. It is not:</p>
         <ul>
-          <li>Professional home inspection.</li>
+          <li>A professional home inspection.</li>
           <li>Legal, financial, or contractor advice.</li>
           <li>A warranty or guarantee of any kind.</li>
         </ul>

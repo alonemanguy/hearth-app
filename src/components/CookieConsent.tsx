@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { easings } from '../lib/motion';
 
@@ -16,13 +17,8 @@ export default function CookieConsent() {
     }
   }, []);
 
-  const accept = () => {
-    localStorage.setItem(STORAGE_KEY, 'accepted');
-    setVisible(false);
-  };
-
-  const decline = () => {
-    localStorage.setItem(STORAGE_KEY, 'essential-only');
+  const choose = (value: 'accepted' | 'essential-only') => {
+    localStorage.setItem(STORAGE_KEY, value);
     setVisible(false);
   };
 
@@ -38,23 +34,25 @@ export default function CookieConsent() {
         >
           <div className="cookie-banner-inner">
             <p className="cookie-banner-text">
-              Hearth uses only essential cookies to keep you signed in. No
-              tracking, no ads, no third-party analytics.
+              Hearth keeps you signed in with one essential cookie. With your
+              permission we also measure which features get used, so we know
+              what to work on next. Details in our{' '}
+              <Link to="/privacy">privacy policy</Link>.
             </p>
             <div className="cookie-banner-actions">
               <button
                 className="cookie-btn cookie-btn--ghost"
-                onClick={decline}
+                onClick={() => choose('essential-only')}
                 type="button"
               >
                 Essential only
               </button>
               <button
                 className="cookie-btn cookie-btn--primary"
-                onClick={accept}
+                onClick={() => choose('accepted')}
                 type="button"
               >
-                Got it
+                Accept all
               </button>
             </div>
           </div>

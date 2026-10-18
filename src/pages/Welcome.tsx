@@ -14,18 +14,18 @@ type Feature = {
 const FEATURES: Feature[] = [
   {
     icon: 'bell',
-    title: 'Never miss maintenance',
-    body: 'Reminders that reach you even when the app is closed.',
+    title: 'Reminders that arrive',
+    body: 'A push notification before a filter, flush, or service is due.',
   },
   {
     icon: 'warranty',
-    title: 'Remember every warranty',
-    body: 'Know exactly what\u2019s covered — and when it expires.',
+    title: 'Warranty dates on file',
+    body: 'Add the expiry date once and see it before it lapses.',
   },
   {
-    icon: 'home',
-    title: 'Know your home',
-    body: 'One calm place for appliances, records, and service history.',
+    icon: 'appliance',
+    title: 'Appliances and records',
+    body: 'Make, model, serial number, and service notes for each one.',
   },
 ];
 
@@ -55,9 +55,9 @@ export default function Welcome() {
             delay: reduce ? 0 : 0.15,
           }}
         >
-          Every home has a story.
+          Filter changes, warranty dates,
           <br />
-          Hearth keeps it.
+          service history.
         </motion.h1>
 
         <motion.p
@@ -70,8 +70,7 @@ export default function Welcome() {
             delay: reduce ? 0 : 0.25,
           }}
         >
-          Track maintenance, warranties, and everything that keeps your home
-          running — in one calm place.
+          One place for all of it, with a reminder before each one is due.
         </motion.p>
 
         <motion.div
@@ -113,24 +112,6 @@ export default function Welcome() {
             <p className="welcome-feature-body">{feature.body}</p>
           </motion.div>
         ))}
-      </section>
-
-      <section className="welcome-quote">
-        <motion.blockquote
-          className="welcome-quote-inner"
-          initial={reduce ? false : { opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.4 }}
-          transition={{ duration: 0.55, ease: easings.easeOutExpo }}
-        >
-          <p className="welcome-quote-text">
-            &ldquo;I stopped worrying about my HVAC filter the day I started
-            using Hearth.&rdquo;
-          </p>
-          <footer className="welcome-quote-attribution">
-            — Early Hearth user
-          </footer>
-        </motion.blockquote>
       </section>
 
       <section className="welcome-footer">
