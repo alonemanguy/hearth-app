@@ -1,6 +1,9 @@
-# figma-make-app
+# Hearth
 
-React + Vite + Tailwind CSS project running inside Figma Make.
+React + Vite project scaffolded inside Figma Make.
+
+Note: Tailwind is wired up as a Vite plugin but `src/index.css` does not import
+it, so the app's styles come from plain CSS in `src/index.css`.
 
 ## Development Server
 

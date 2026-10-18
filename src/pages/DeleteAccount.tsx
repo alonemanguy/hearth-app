@@ -5,7 +5,7 @@ import Header from '../components/Header';
 import Card from '../components/Card';
 import Button from '../components/Button';
 import Input from '../components/Input';
-import { supabase } from '../lib/supabase';
+import { supabase, supabaseUrl } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
 import { Icon } from '../lib/icons';
 
@@ -37,7 +37,7 @@ export default function DeleteAccount() {
 
     try {
       const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-account`,
+        `${supabaseUrl}/functions/v1/delete-account`,
         {
           method: 'POST',
           headers: {
