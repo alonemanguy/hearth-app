@@ -249,7 +249,9 @@ function buildRecommendations(
     if (missingWarranty > 0) {
       recs.push({
         id: 'add-warranties',
-        title: `Track ${missingWarranty} warranty${missingWarranty === 1 ? '' : 'ies'}`,
+        title: `Track ${missingWarranty} ${
+          missingWarranty === 1 ? 'warranty' : 'warranties'
+        }`,
         body: 'Add expiry dates so nothing lapses unnoticed.',
         points: Math.min(missingWarranty * 2, 8),
         linkTo: '/appliances',

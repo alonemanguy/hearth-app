@@ -429,7 +429,11 @@ export default function Home() {
     state !== 'loading'
       ? getSeasonalChecklist(property?.climate_zone)
       : [];
-  const showSeasonal = seasonalTasks.length > 0 && !showWelcomeCard;
+  // The seasonal strip is scaffolding for light accounts: it fills a thin
+  // home with ready-made work, then steps aside once there is enough of a
+  // backlog to stand on its own.
+  const showSeasonal =
+    seasonalTasks.length > 0 && !showWelcomeCard && openCount <= 8;
 
   const showWarrantyVault =
     appliances.length > 0 && hasAnyWarrantyDocs(appliances);
@@ -816,7 +820,7 @@ export default function Home() {
             <div className="getting-started-content">
               <div className="getting-started-title">Get your home on autopilot</div>
               <div className="getting-started-sub">
-                Add your first appliance and we'll set up its first reminder automatically.
+                Add your first appliance and we'll set up its reminders automatically.
               </div>
             </div>
             <div className="getting-started-actions">

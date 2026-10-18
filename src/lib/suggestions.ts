@@ -16,15 +16,27 @@ export type CommonAppliance = {
   category: ApplianceCategory;
 };
 
+export type MaintenanceTemplate = {
+  id: string;
+  title: string;
+  repeat: 'monthly' | 'quarterly' | 'yearly';
+  dueInDays: number;
+  reason: string;
+};
+
+export const REPEAT_LABELS: Record<MaintenanceTemplate['repeat'], string> = {
+  monthly: 'Every month',
+  quarterly: 'Every 3 months',
+  yearly: 'Every year',
+};
+
 export type ApplianceTemplate = {
   id: string;
   label: string;
   category: ApplianceCategory;
-  defaultTask: string;
-  defaultInterval: 'once' | 'monthly' | 'quarterly' | 'yearly';
-  defaultDueInDays: number;
   icon: IconName;
-  reason: string;
+  /** Default maintenance schedule. The first entry is the first reminder. */
+  tasks: MaintenanceTemplate[];
 };
 
 export type MonthlyFocus = {
@@ -49,71 +61,228 @@ export const APPLIANCE_TEMPLATES: ApplianceTemplate[] = [
     id: 'hvac',
     label: 'HVAC system',
     category: 'hvac',
-    defaultTask: 'Replace HVAC filter',
-    defaultInterval: 'quarterly',
-    defaultDueInDays: 90,
     icon: 'hvac',
-    reason: 'Clean filters keep your air healthy and system efficient.',
+    tasks: [
+      {
+        id: 'mt-hvac-filter',
+        title: 'Replace the air filter',
+        repeat: 'quarterly',
+        dueInDays: 7,
+        reason: 'Most residential filters last about 90 days.',
+      },
+      {
+        id: 'mt-hvac-tuneup',
+        title: 'Annual heating and cooling tune-up',
+        repeat: 'yearly',
+        dueInDays: 30,
+        reason: 'A spring check catches low refrigerant and dirty coils.',
+      },
+      {
+        id: 'mt-hvac-drain',
+        title: 'Clear the condensate drain line',
+        repeat: 'yearly',
+        dueInDays: 60,
+        reason: 'A clogged drain is the most common cause of AC leaks.',
+      },
+    ],
   },
   {
     id: 'water-heater',
     label: 'Water heater',
     category: 'plumbing',
-    defaultTask: 'Flush water heater',
-    defaultInterval: 'yearly',
-    defaultDueInDays: 365,
     icon: 'plumbing',
-    reason: 'Removes sediment and extends tank life.',
+    tasks: [
+      {
+        id: 'mt-wh-flush',
+        title: 'Flush the tank',
+        repeat: 'yearly',
+        dueInDays: 30,
+        reason: 'Sediment settles in the tank and raises heating costs.',
+      },
+      {
+        id: 'mt-wh-leak',
+        title: 'Check around the base for leaks',
+        repeat: 'quarterly',
+        dueInDays: 21,
+        reason: 'Slow drips rot floors long before they show.',
+      },
+    ],
   },
   {
     id: 'fridge',
     label: 'Refrigerator',
     category: 'appliance',
-    defaultTask: 'Clean fridge coils',
-    defaultInterval: 'yearly',
-    defaultDueInDays: 365,
     icon: 'appliance',
-    reason: 'Prevents overheating and saves energy.',
+    tasks: [
+      {
+        id: 'mt-fridge-coils',
+        title: 'Clean the condenser coils',
+        repeat: 'yearly',
+        dueInDays: 21,
+        reason: 'Dusty coils make the compressor work harder.',
+      },
+      {
+        id: 'mt-fridge-temp',
+        title: 'Check the fridge temperature',
+        repeat: 'monthly',
+        dueInDays: 10,
+        reason: 'Below 40\u00B0F keeps food safe.',
+      },
+    ],
   },
   {
     id: 'dishwasher',
     label: 'Dishwasher',
     category: 'appliance',
-    defaultTask: 'Clean dishwasher filter',
-    defaultInterval: 'monthly',
-    defaultDueInDays: 30,
     icon: 'appliance',
-    reason: 'Prevents clogs and keeps dishes clean.',
+    tasks: [
+      {
+        id: 'mt-dish-filter',
+        title: 'Clean the filter',
+        repeat: 'monthly',
+        dueInDays: 14,
+        reason: 'Food residue is why dishes come out cloudy.',
+      },
+      {
+        id: 'mt-dish-cycle',
+        title: 'Run an empty vinegar cycle',
+        repeat: 'quarterly',
+        dueInDays: 30,
+        reason: 'Clears grease and buildup from the spray arms.',
+      },
+    ],
   },
   {
-    id: 'washer-dryer',
-    label: 'Washer / dryer',
+    id: 'washer',
+    label: 'Washer',
     category: 'appliance',
-    defaultTask: 'Clean dryer vent',
-    defaultInterval: 'yearly',
-    defaultDueInDays: 365,
     icon: 'appliance',
-    reason: 'Reduces fire risk and shortens drying time.',
+    tasks: [
+      {
+        id: 'mt-wash-seal',
+        title: 'Wipe the door seal and drum',
+        repeat: 'monthly',
+        dueInDays: 14,
+        reason: 'Mold starts in the fold of a front-loader seal.',
+      },
+      {
+        id: 'mt-wash-hoses',
+        title: 'Inspect the supply hoses',
+        repeat: 'yearly',
+        dueInDays: 21,
+        reason: 'Rubber hoses split with age. Braided ones last longer.',
+      },
+    ],
   },
   {
-    id: 'smoke-detector',
-    label: 'Smoke detectors',
+    id: 'dryer',
+    label: 'Dryer',
+    category: 'appliance',
+    icon: 'appliance',
+    tasks: [
+      {
+        id: 'mt-dry-vent',
+        title: 'Clean the dryer vent line',
+        repeat: 'yearly',
+        dueInDays: 30,
+        reason: 'Lint past the trap is a top cause of house fires.',
+      },
+      {
+        id: 'mt-dry-trap',
+        title: 'Vacuum behind and under the dryer',
+        repeat: 'yearly',
+        dueInDays: 60,
+        reason: 'Lint collects where you never look.',
+      },
+    ],
+  },
+  {
+    id: 'smoke-detectors',
+    label: 'Smoke / CO detectors',
     category: 'electrical',
-    defaultTask: 'Test smoke detectors',
-    defaultInterval: 'monthly',
-    defaultDueInDays: 30,
     icon: 'electrical',
-    reason: 'Critical safety check every month.',
+    tasks: [
+      {
+        id: 'mt-det-test',
+        title: 'Test every detector',
+        repeat: 'monthly',
+        dueInDays: 3,
+        reason: 'Press the test button on each unit in the house.',
+      },
+      {
+        id: 'mt-det-batt',
+        title: 'Replace the batteries',
+        repeat: 'yearly',
+        dueInDays: 45,
+        reason: 'Fresh batteries once a year keeps them reliable.',
+      },
+    ],
   },
   {
-    id: 'gutters',
-    label: 'Gutters & roof',
-    category: 'other',
-    defaultTask: 'Clean gutters',
-    defaultInterval: 'yearly',
-    defaultDueInDays: 180,
+    id: 'garbage-disposal',
+    label: 'Garbage disposal',
+    category: 'plumbing',
     icon: 'plumbing',
-    reason: 'Prevents water damage to your home.',
+    tasks: [
+      {
+        id: 'mt-disp-clean',
+        title: 'Clean and deodorize the disposal',
+        repeat: 'monthly',
+        dueInDays: 14,
+        reason: 'Ice and salt clear the blades and cut the smell.',
+      },
+      {
+        id: 'mt-disp-leak',
+        title: 'Check for leaks underneath',
+        repeat: 'yearly',
+        dueInDays: 60,
+        reason: 'A slow leak at the flange rots the cabinet floor.',
+      },
+    ],
+  },
+  {
+    id: 'range',
+    label: 'Range / oven',
+    category: 'appliance',
+    icon: 'appliance',
+    tasks: [
+      {
+        id: 'mt-range-wipe',
+        title: 'Wipe the oven interior',
+        repeat: 'quarterly',
+        dueInDays: 45,
+        reason: 'Built-up grease smokes and sets off the smoke alarm.',
+      },
+      {
+        id: 'mt-range-hood',
+        title: 'Clean the range hood filter',
+        repeat: 'quarterly',
+        dueInDays: 30,
+        reason: 'A greasy filter stops pulling steam and smoke.',
+      },
+    ],
+  },
+  {
+    id: 'microwave',
+    label: 'Microwave',
+    category: 'appliance',
+    icon: 'appliance',
+    tasks: [
+      {
+        id: 'mt-micro-wipe',
+        title: 'Wipe the interior and turntable',
+        repeat: 'monthly',
+        dueInDays: 21,
+        reason: 'Splatter hardens and starts to smell.',
+      },
+      {
+        id: 'mt-micro-filter',
+        title: 'Check the vent filter',
+        repeat: 'yearly',
+        dueInDays: 90,
+        reason: 'Grease clogs the filter above the stove.',
+      },
+    ],
   },
 ];
 
@@ -127,24 +296,19 @@ export function getApplianceTemplateById(
   return APPLIANCE_TEMPLATES.find((t) => t.id === id);
 }
 
-const COMMON_APPLIANCES: CommonAppliance[] = [
-  { key: 'hvac', label: 'HVAC system', category: 'hvac' },
-  { key: 'water-heater', label: 'Water heater', category: 'plumbing' },
-  { key: 'fridge', label: 'Refrigerator', category: 'appliance' },
-  { key: 'dishwasher', label: 'Dishwasher', category: 'appliance' },
-  { key: 'washer-dryer', label: 'Washer / dryer', category: 'appliance' },
-  { key: 'smoke-detector', label: 'Smoke detectors', category: 'electrical' },
-  { key: 'gutters', label: 'Gutters & roof', category: 'other' },
-];
-
 export function getCommonApplianceSuggestions(
   existing: Appliance[]
 ): CommonAppliance[] {
+  const candidates: CommonAppliance[] = APPLIANCE_TEMPLATES.map((t) => ({
+    key: t.id,
+    label: t.label,
+    category: t.category,
+  }));
   const existingNames = new Set(
     existing.map((a) => a.name.toLowerCase().trim())
   );
 
-  return COMMON_APPLIANCES.filter((c) => {
+  return candidates.filter((c) => {
     const name = c.label.toLowerCase();
     for (const existing of existingNames) {
       if (existing.includes(name.split(' ')[0])) return false;
@@ -279,25 +443,32 @@ export function seasonLabel(s: Season): string {
 const SEASONAL_TASKS: Record<Season, SeasonalTask[]> = {
   spring: [
     {
-      id: 'spring-roof',
-      title: 'Inspect roof for winter damage',
-      reason: 'Freeze-thaw cycles crack shingles and flashing.',
+      id: 'spring-ac',
+      title: 'Service the AC before summer',
+      reason: 'Catch low refrigerant and airflow issues early.',
       repeat: 'yearly',
-      icon: 'wrench',
+      icon: 'hvac',
     },
     {
       id: 'spring-gutters',
-      title: 'Clean out gutters',
+      title: 'Clean out the gutters',
       reason: 'Winter debris blocks drainage and causes leaks.',
       repeat: 'yearly',
       icon: 'plumbing',
     },
     {
-      id: 'spring-ac',
-      title: 'Service AC before summer',
-      reason: 'Catch refrigerant and airflow issues early.',
+      id: 'spring-roof',
+      title: 'Inspect the roof for winter damage',
+      reason: 'Freeze-thaw cycles crack shingles and flashing.',
       repeat: 'yearly',
-      icon: 'hvac',
+      icon: 'wrench',
+    },
+    {
+      id: 'spring-detectors',
+      title: 'Test smoke and CO detectors',
+      reason: 'A quick button press on every unit in the house.',
+      repeat: 'yearly',
+      icon: 'electrical',
     },
     {
       id: 'spring-exterior',
@@ -306,56 +477,63 @@ const SEASONAL_TASKS: Record<Season, SeasonalTask[]> = {
       repeat: 'yearly',
       icon: 'home',
     },
-    {
-      id: 'spring-irrigation',
-      title: 'Test irrigation system',
-      reason: 'Broken sprinkler heads waste water.',
-      repeat: 'yearly',
-      icon: 'plumbing',
-    },
   ],
   summer: [
     {
       id: 'summer-ac',
-      title: 'Check AC efficiency and filter',
-      reason: 'Peak usage. Small issues turn into big bills.',
+      title: 'Check the AC filter and efficiency',
+      reason: 'Peak usage season. Small issues turn into big bills.',
       repeat: 'yearly',
       icon: 'hvac',
     },
     {
-      id: 'summer-deck',
-      title: 'Inspect deck and fence',
-      reason: 'Sun and heat warp wood. Catch rot early.',
-      repeat: 'yearly',
-      icon: 'wrench',
-    },
-    {
       id: 'summer-dryer',
-      title: 'Clean dryer vent',
+      title: 'Clean the dryer vent',
       reason: 'Lint buildup is a top cause of house fires.',
       repeat: 'yearly',
       icon: 'appliance',
     },
     {
+      id: 'summer-hood',
+      title: 'Clean the range hood filter',
+      reason: 'Cooking grease collects fast in summer.',
+      repeat: 'yearly',
+      icon: 'appliance',
+    },
+    {
+      id: 'summer-faucets',
+      title: 'Check outdoor faucets and irrigation',
+      reason: 'Cracked spigots and broken heads waste water all season.',
+      repeat: 'yearly',
+      icon: 'plumbing',
+    },
+    {
       id: 'summer-pests',
-      title: 'Check for pest entry points',
+      title: 'Look for pest entry points',
       reason: 'Summer is peak season for insects and rodents.',
       repeat: 'yearly',
       icon: 'wrench',
     },
-    {
-      id: 'summer-smoke',
-      title: 'Test smoke and CO detectors',
-      reason: 'Recommended monthly, extra important in summer.',
-      repeat: 'yearly',
-      icon: 'electrical',
-    },
   ],
   fall: [
     {
+      id: 'fall-heating',
+      title: 'Service the heating system',
+      reason: 'Book it before the first cold snap, not during it.',
+      repeat: 'yearly',
+      icon: 'hvac',
+    },
+    {
       id: 'fall-gutters',
-      title: 'Clean gutters after leaves fall',
-      reason: 'Clogged gutters cause ice dams in winter.',
+      title: 'Clean gutters after the leaves fall',
+      reason: 'Clogged gutters turn into ice dams in winter.',
+      repeat: 'yearly',
+      icon: 'plumbing',
+    },
+    {
+      id: 'fall-flush',
+      title: 'Flush the water heater',
+      reason: 'Sediment from summer settles and raises winter bills.',
       repeat: 'yearly',
       icon: 'plumbing',
     },
@@ -365,20 +543,6 @@ const SEASONAL_TASKS: Record<Season, SeasonalTask[]> = {
       reason: 'Trapped water freezes and bursts pipes.',
       repeat: 'yearly',
       icon: 'plumbing',
-    },
-    {
-      id: 'fall-heating',
-      title: 'Service heating system',
-      reason: 'Service it before the first cold snap.',
-      repeat: 'yearly',
-      icon: 'hvac',
-    },
-    {
-      id: 'fall-chimney',
-      title: 'Inspect chimney and fireplace',
-      reason: 'Creosote buildup causes chimney fires.',
-      repeat: 'yearly',
-      icon: 'wrench',
     },
     {
       id: 'fall-seal',
@@ -404,13 +568,6 @@ const SEASONAL_TASKS: Record<Season, SeasonalTask[]> = {
       icon: 'wrench',
     },
     {
-      id: 'winter-heating',
-      title: 'Check heating system performance',
-      reason: 'Peak load. Inefficiency shows up now.',
-      repeat: 'yearly',
-      icon: 'hvac',
-    },
-    {
       id: 'winter-vents',
       title: 'Keep exterior vents clear of snow',
       reason: 'Blocked vents cause carbon monoxide buildup.',
@@ -420,7 +577,14 @@ const SEASONAL_TASKS: Record<Season, SeasonalTask[]> = {
     {
       id: 'winter-detectors',
       title: 'Test smoke and CO detectors',
-      reason: 'Extra important with closed windows and heating.',
+      reason: 'Extra important with windows closed and heating running.',
+      repeat: 'yearly',
+      icon: 'electrical',
+    },
+    {
+      id: 'winter-gfci',
+      title: 'Test GFCI outlets',
+      reason: 'Kitchen and bathroom outlets should trip and reset cleanly.',
       repeat: 'yearly',
       icon: 'electrical',
     },
@@ -430,7 +594,7 @@ const SEASONAL_TASKS: Record<Season, SeasonalTask[]> = {
 export function getSeasonalChecklist(
   _climateZone?: string | null
 ): SeasonalTask[] {
-  return SEASONAL_TASKS[getSeason()].slice(0, 4);
+  return SEASONAL_TASKS[getSeason()];
 }
 
 /* ------------------------------------------------------------------ */
@@ -565,14 +729,6 @@ export function getMonthlyFocus(
 /* Maintenance templates for the New appliance screen                  */
 /* ------------------------------------------------------------------ */
 
-export type MaintenanceTemplate = {
-  id: string;
-  title: string;
-  repeat: 'monthly' | 'quarterly' | 'yearly';
-  dueInDays: number;
-  reason: string;
-};
-
 const MAINTENANCE_TEMPLATES: Record<
   ApplianceCategory,
   MaintenanceTemplate[]
@@ -693,4 +849,25 @@ export function toISODate(date: Date): string {
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
+}
+
+/**
+ * When a template task should first come due. Counts from the install or
+ * purchase date when one is known, otherwise from today. A schedule that
+ * would land in the past (the appliance is older than the interval) starts
+ * today instead of creating an overdue task on a brand-new appliance.
+ */
+export function firstDueDate(
+  dueInDays: number,
+  startDate?: string | null
+): Date {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  let base = today;
+  if (startDate) {
+    const parsed = new Date(`${startDate}T00:00:00`);
+    if (!Number.isNaN(parsed.getTime())) base = parsed;
+  }
+  const due = addDays(base, dueInDays);
+  return due.getTime() < today.getTime() ? today : due;
 }

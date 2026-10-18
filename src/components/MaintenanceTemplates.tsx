@@ -1,37 +1,36 @@
 import { motion, useReducedMotion } from 'motion/react';
-import { ApplianceCategory } from '../lib/types';
 import {
   MaintenanceTemplate,
-  addDays,
-  getMaintenanceTemplates,
+  REPEAT_LABELS,
+  firstDueDate,
 } from '../lib/suggestions';
 import { Icon } from '../lib/icons';
 import { easings } from '../lib/motion';
 
 type Props = {
-  category: ApplianceCategory;
+  tasks: MaintenanceTemplate[];
   selected: string[];
   onToggle: (id: string) => void;
-};
-
-const CADENCE: Record<MaintenanceTemplate['repeat'], string> = {
-  monthly: 'Every month',
-  quarterly: 'Every 3 months',
-  yearly: 'Every year',
+  /** Install or purchase date. First due dates count from here when set. */
+  dueBase?: string | null;
+  heading?: string;
+  sub?: string;
 };
 
 export default function MaintenanceTemplates({
-  category,
+  tasks,
   selected,
   onToggle,
+  dueBase,
+  heading = 'Schedule maintenance',
+  sub = 'Pick what applies. Each one is added as a task when you save.',
 }: Props) {
   const reduce = useReducedMotion();
-  const templates = getMaintenanceTemplates(category);
 
-  if (templates.length === 0) {
+  if (tasks.length === 0) {
     return (
       <div className="template-section">
-        <h3 className="section-title">Schedule maintenance</h3>
+        <h3 className="section-title">{heading}</h3>
         <p className="section-sub">
           Nothing standard for this category. You can add a task after
           saving.
@@ -42,14 +41,12 @@ export default function MaintenanceTemplates({
 
   return (
     <div className="template-section">
-      <h3 className="section-title">Schedule maintenance</h3>
-      <p className="section-sub">
-        Pick what applies. Each one is added as a task when you save.
-      </p>
+      <h3 className="section-title">{heading}</h3>
+      <p className="section-sub">{sub}</p>
       <div className="template-list">
-        {templates.map((t, i) => {
+        {tasks.map((t, i) => {
           const active = selected.includes(t.id);
-          const due = addDays(new Date(), t.dueInDays);
+          const due = firstDueDate(t.dueInDays, dueBase);
           return (
             <motion.button
               key={t.id}
@@ -66,17 +63,25 @@ export default function MaintenanceTemplates({
               }}
               whileTap={reduce ? undefined : { scale: 0.99 }}
             >
-              <span className="template-check">
+              <motion.span
+                className="template-check"
+                animate={
+                  reduce
+                    ? undefined
+                    : { scale: active ? [1, 1.18, 1] : 1 }
+                }
+                transition={{ duration: 0.28, ease: 'easeOut' }}
+              >
                 <Icon
                   name={active ? 'checkCircle' : 'add'}
                   size={20}
                   strokeWidth={active ? 2 : 1.8}
                 />
-              </span>
+              </motion.span>
               <span className="template-copy">
                 <span className="template-title">{t.title}</span>
                 <span className="template-meta">
-                  {CADENCE[t.repeat]} · first due{' '}
+                  {REPEAT_LABELS[t.repeat]} · first due{' '}
                   {due.toLocaleDateString('en-US', {
                     month: 'short',
                     day: 'numeric',

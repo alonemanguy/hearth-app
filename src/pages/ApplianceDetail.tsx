@@ -10,11 +10,13 @@ import Skeleton from '../components/Skeleton';
 import EmptyState from '../components/EmptyState';
 import AttachmentsSection from '../components/AttachmentsSection';
 import MaintenanceTemplates from '../components/MaintenanceTemplates';
+import ApplianceTemplateGrid from '../components/ApplianceTemplateGrid';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
 import { easings } from '../lib/motion';
 import {
-  addDays,
+  firstDueDate,
+  getApplianceTemplateById,
   getMaintenanceTemplates,
   toISODate,
 } from '../lib/suggestions';
@@ -64,6 +66,9 @@ export default function ApplianceDetail() {
   const [lifespan, setLifespan] = useState('');
   const [notes, setNotes] = useState('');
   const [templateIds, setTemplateIds] = useState<string[]>([]);
+  const [applianceTemplateId, setApplianceTemplateId] = useState<
+    string | null
+  >(null);
 
   useEffect(() => {
     if (isNew) return;
@@ -104,12 +109,20 @@ export default function ApplianceDetail() {
 
   const chooseCategory = (c: ApplianceCategory) => {
     setCategory(c);
-    // Drop picks that belonged to the previous category.
-    setTemplateIds((ids) =>
-      ids.filter((tid) =>
-        getMaintenanceTemplates(c).some((t) => t.id === tid)
-      )
-    );
+    // A manual category means no appliance template: fall back to the
+    // category's maintenance templates and drop template picks.
+    setApplianceTemplateId(null);
+    setTemplateIds([]);
+  };
+
+  const selectApplianceTemplate = (templateId: string) => {
+    const template = getApplianceTemplateById(templateId);
+    if (!template) return;
+    setApplianceTemplateId(templateId);
+    setCategory(template.category);
+    // Start with the whole schedule picked. The panel lets people trim it.
+    setTemplateIds(template.tasks.map((t) => t.id));
+    setName((prev) => (prev.trim() ? prev : template.label));
   };
 
   const toggleTemplate = (tid: string) => {
@@ -169,20 +182,29 @@ export default function ApplianceDetail() {
       return;
     }
 
-    // Schedule the picked maintenance templates. If this fails the
-    // appliance is already saved, so keep the picks: saving again retries.
+    // Schedule the picked maintenance. If this fails the appliance is
+    // already saved, so keep the picks: saving again retries.
     let taskError: { message: string } | null = null;
-    const rows = getMaintenanceTemplates(category)
+    const template = applianceTemplateId
+      ? getApplianceTemplateById(applianceTemplateId)
+      : null;
+    const scheduleSource = template
+      ? template.tasks
+      : getMaintenanceTemplates(category);
+    // First occurrences count from the install or purchase date when one
+    // is known, so older appliances don't get a fresh start on intervals.
+    const dueBase = installDate || purchaseDate || null;
+    const rows = scheduleSource
       .filter((t) => templateIds.includes(t.id))
       .map((t) => ({
         user_id: user.id,
         appliance_id: result.data.id,
         appliance: result.data.name,
         title: t.title,
-        due_date: toISODate(addDays(new Date(), t.dueInDays)),
+        due_date: toISODate(firstDueDate(t.dueInDays, dueBase)),
         repeat: t.repeat,
         status: 'due',
-        notes: null,
+        notes: t.reason,
       }));
 
     if (rows.length > 0) {
@@ -192,6 +214,7 @@ export default function ApplianceDetail() {
         console.error('Error scheduling maintenance tasks:', error);
       } else {
         setTemplateIds([]);
+        setApplianceTemplateId(null);
       }
     }
 
@@ -260,6 +283,19 @@ export default function ApplianceDetail() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, ease: easings.easeOutExpo }}
         >
+          {isNew && (
+            <div className="input-group">
+              <label>Appliance</label>
+              <ApplianceTemplateGrid
+                selectedId={applianceTemplateId}
+                pickedTaskIds={templateIds}
+                onSelect={selectApplianceTemplate}
+                onToggleTask={toggleTemplate}
+                dueBase={installDate || purchaseDate || null}
+              />
+            </div>
+          )}
+
           <Input
             label="Name"
             value={name}
@@ -291,11 +327,13 @@ export default function ApplianceDetail() {
             </div>
           </div>
 
-          {(isNew || templateIds.length > 0) && (
+          {!applianceTemplateId && (isNew || templateIds.length > 0) && (
             <MaintenanceTemplates
-              category={category}
+              tasks={getMaintenanceTemplates(category)}
               selected={templateIds}
               onToggle={toggleTemplate}
+              dueBase={installDate || purchaseDate || null}
+              heading={isNew ? undefined : 'Add more maintenance'}
             />
           )}
 

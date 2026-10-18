@@ -11,6 +11,58 @@ import { easings } from '../lib/motion';
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PASSWORD_RE = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>]).{12,}$/;
 
+// Mirrors PASSWORD_RE, one line per requirement so nothing is a surprise
+// at submit time.
+const PW_RULES: { label: string; test: (pw: string) => boolean }[] = [
+  { label: 'At least 12 characters', test: (pw) => pw.length >= 12 },
+  {
+    label: 'Upper and lowercase letters',
+    test: (pw) => /[a-z]/.test(pw) && /[A-Z]/.test(pw),
+  },
+  { label: 'A number', test: (pw) => /\d/.test(pw) },
+  {
+    label: 'A symbol',
+    test: (pw) => /[!@#$%^&*(),.?":{}|<>]/.test(pw),
+  },
+];
+
+function PasswordChecklist({ password }: { password: string }) {
+  const reduce = useReducedMotion();
+  return (
+    <ul className="pw-rules">
+      {PW_RULES.map((rule) => {
+        const ok = rule.test(password);
+        return (
+          <li
+            key={rule.label}
+            className={`pw-rule ${ok ? 'pw-rule--ok' : ''}`}
+          >
+            <span className="pw-rule-mark" aria-hidden="true">
+              <svg width={12} height={12} viewBox="0 0 12 12" fill="none">
+                <motion.path
+                  d="M 2 6.5 L 4.8 9 L 10 3"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  initial={false}
+                  animate={{ pathLength: ok ? 1 : 0, opacity: ok ? 1 : 0 }}
+                  transition={
+                    reduce
+                      ? { duration: 0 }
+                      : { duration: 0.25, ease: 'easeOut' }
+                  }
+                />
+              </svg>
+            </span>
+            {rule.label}
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
 export function Login() {
   const navigate = useNavigate();
   const { signIn, signUp } = useAuth();
@@ -135,19 +187,19 @@ export function Login() {
             label="Password"
             type="password"
             value={password}
-            onChange={setPassword}
-            placeholder={isSignUp ? '12+ chars with uppercase, number, symbol' : 'Your password'}
+            onChange={(v) => {
+              setPassword(v);
+              // The checklist tells the story while typing; the error
+              // only needs to exist at submit time.
+              if (passwordError) setPasswordError(null);
+            }}
+            placeholder={isSignUp ? 'Make it count' : 'Your password'}
             error={passwordError}
             autoComplete={isSignUp ? 'new-password' : 'current-password'}
             required
           />
 
-          {isSignUp && (
-            <p className="auth-hint">
-              Password must be 12+ characters with at least one uppercase letter,
-              one lowercase letter, one number, and one special character.
-            </p>
-          )}
+          {isSignUp && <PasswordChecklist password={password} />}
 
           {!isSignUp && (
             <div style={{ textAlign: 'right', marginTop: -8, marginBottom: 16 }}>

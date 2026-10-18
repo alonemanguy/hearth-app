@@ -32,6 +32,7 @@ import Waitlist from './pages/Waitlist';
 import Completed from './pages/Completed';
 import Health from './pages/Health';
 import TabBar from './components/TabBar';
+import OnlineStatus from './components/OnlineStatus';
 import CookieConsent from './components/CookieConsent';
 import Logo from './components/Logo';
 
@@ -152,6 +153,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <OnlineStatus />
         <AppRoutes />
       </AuthProvider>
     </BrowserRouter>

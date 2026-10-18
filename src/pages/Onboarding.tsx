@@ -13,25 +13,13 @@ import { ApplianceCategory, CATEGORY_LABELS } from '../lib/types';
 import { CATEGORY_ICONS } from '../lib/icons';
 import {
   getOnboardingPresets,
-  getApplianceTemplates,
   getApplianceTemplateById,
-  ApplianceTemplate,
+  firstDueDate,
+  toISODate,
 } from '../lib/suggestions';
+import ApplianceTemplateGrid from '../components/ApplianceTemplateGrid';
 
 type Step = 'welcome' | 'name' | 'terms' | 'home' | 'appliance' | 'done';
-
-const INTERVAL_LABELS: Record<ApplianceTemplate['defaultInterval'], string> = {
-  once: 'One time',
-  monthly: 'Every month',
-  quarterly: 'Every 3 months',
-  yearly: 'Every year',
-};
-
-function firstDueLabel(days: number): string {
-  const d = new Date();
-  d.setDate(d.getDate() + days);
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-}
 
 const STEPS: Step[] = [
   'welcome',
@@ -58,12 +46,6 @@ const CATEGORIES: ApplianceCategory[] = [
   'other',
 ];
 
-function addDays(dateStr: string, days: number): string {
-  const d = new Date(dateStr + 'T00:00:00');
-  d.setDate(d.getDate() + days);
-  return d.toISOString().split('T')[0];
-}
-
 export default function Onboarding() {
   const navigate = useNavigate();
   const { user, completeOnboarding } = useAuth();
@@ -86,9 +68,8 @@ export default function Onboarding() {
   const [applianceModel, setApplianceModel] = useState('');
   const [warrantyExpiry, setWarrantyExpiry] = useState('');
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
+  const [templatePicks, setTemplatePicks] = useState<string[]>([]);
   const [addedAppliance, setAddedAppliance] = useState(false);
-
-  const templates = getApplianceTemplates();
 
   const stepIndex = STEPS.indexOf(step);
   const progressIndex = PROGRESS_STEPS.indexOf(step);
@@ -112,8 +93,16 @@ export default function Onboarding() {
     const template = getApplianceTemplateById(templateId);
     if (!template) return;
     setSelectedTemplate(templateId);
+    // Start with the whole schedule picked. The panel lets people trim it.
+    setTemplatePicks(template.tasks.map((t) => t.id));
     setApplianceName(template.label);
     setApplianceCategory(template.category);
+  };
+
+  const toggleTemplateTask = (taskId: string) => {
+    setTemplatePicks((ids) =>
+      ids.includes(taskId) ? ids.filter((x) => x !== taskId) : [...ids, taskId]
+    );
   };
 
   const handleFinish = async () => {
@@ -181,44 +170,52 @@ export default function Onboarding() {
       return;
     }
 
-    const today = new Date().toISOString().split('T')[0];
-    let taskTitle: string;
-    let taskRepeat: 'once' | 'monthly' | 'quarterly' | 'yearly' = 'once';
-    let taskDueInDays: number = 7;
+    let taskError: { message: string } | null = null;
 
     if (template) {
-      taskTitle = template.defaultTask;
-      taskRepeat = template.defaultInterval;
-      taskDueInDays = template.defaultDueInDays;
+      const rows = template.tasks
+        .filter((t) => templatePicks.includes(t.id))
+        .map((t) => ({
+          user_id: user.id,
+          title: t.title,
+          appliance_id: inserted.id,
+          appliance: inserted.name,
+          due_date: toISODate(firstDueDate(t.dueInDays)),
+          repeat: t.repeat,
+          status: 'due',
+          notes: t.reason,
+        }));
+
+      if (rows.length > 0) {
+        const { error } = await supabase.from('tasks').insert(rows);
+        taskError = error;
+        if (error) {
+          console.error('Error creating first tasks:', error);
+        }
+      }
     } else {
       const presets = getOnboardingPresets(applianceCategory);
-      if (presets.length > 0) {
-        taskTitle = presets[0].title;
-        taskRepeat = presets[0].repeat;
-        taskDueInDays = presets[0].dueInDays;
-      } else {
-        taskTitle = 'Check appliance';
-        taskRepeat = 'once';
-        taskDueInDays = 7;
+      const preset = presets[0];
+      const { error } = await supabase.from('tasks').insert({
+        user_id: user.id,
+        title: preset ? preset.title : 'Check appliance',
+        appliance_id: inserted.id,
+        appliance: inserted.name,
+        due_date: toISODate(
+          firstDueDate(preset ? preset.dueInDays : 7)
+        ),
+        repeat: preset ? preset.repeat : 'once',
+        status: 'due',
+      });
+      taskError = error;
+      if (error) {
+        console.error('Error creating first task:', error);
       }
     }
 
-    const dueDate = addDays(today, taskDueInDays);
-
-    const { error: taskError } = await supabase.from('tasks').insert({
-      user_id: user.id,
-      title: taskTitle,
-      appliance_id: inserted.id,
-      appliance: inserted.name,
-      due_date: dueDate,
-      repeat: taskRepeat,
-      status: 'due',
-    });
-
     if (taskError) {
-      console.error('Error creating first task:', taskError);
       setBusy(false);
-      setError('Appliance saved, but we could not set up your first reminder.');
+      setError('Appliance saved, but we could not set up its reminders.');
       goNext();
       return;
     }
@@ -230,20 +227,26 @@ export default function Onboarding() {
 
   const renderProgress = () => {
     if (step === 'done') return null;
+    const pct = ((progressIndex + 1) / PROGRESS_STEPS.length) * 100;
     return (
-      <div className="wizard-progress">
-        {PROGRESS_STEPS.map((s, i) => (
-          <div
-            key={s}
-            className={`wizard-progress-dot ${
-              i === progressIndex
-                ? 'wizard-progress-dot--active'
-                : i < progressIndex
-                ? 'wizard-progress-dot--done'
-                : ''
-            }`}
-          />
-        ))}
+      <div
+        className="wizard-progress"
+        role="progressbar"
+        aria-label="Setup progress"
+        aria-valuemin={0}
+        aria-valuemax={PROGRESS_STEPS.length}
+        aria-valuenow={progressIndex + 1}
+      >
+        <motion.div
+          className="wizard-progress-fill"
+          initial={false}
+          animate={{ width: `${pct}%` }}
+          transition={
+            reduce
+              ? { duration: 0 }
+              : { duration: 0.5, ease: easings.easeOutExpo }
+          }
+        />
       </div>
     );
   };
@@ -272,7 +275,7 @@ export default function Onboarding() {
         </motion.div>
         <h1 className="wizard-title">Welcome to Hearth</h1>
         <p className="wizard-subtitle">
-          Four short screens. Then one appliance, and we set its first reminder.
+          Four short screens. Then one appliance, and we set up its reminders.
         </p>
       </div>
 
@@ -436,38 +439,18 @@ export default function Onboarding() {
         <div className="wizard-header">
           <h1 className="wizard-title">Add your first appliance</h1>
           <p className="wizard-subtitle">
-            Pick what you have, and we'll set up its first reminder for you.
+            Pick what you have and we'll set up its reminders. Trim the list
+            if you like.
           </p>
         </div>
 
         <div className="wizard-content">
-          <div className="template-grid">
-            {templates.map((t) => {
-              const isSelected = selectedTemplate === t.id;
-              const TemplateIcon = CATEGORY_ICONS[t.category];
-              return (
-                <button
-                  key={t.id}
-                  type="button"
-                  className={`template-card ${isSelected ? 'template-card--active' : ''}`}
-                  onClick={() => selectTemplate(t.id)}
-                >
-                  <div className="template-icon">
-                    <TemplateIcon size={24} strokeWidth={1.8} />
-                  </div>
-                  <div className="template-info">
-                    <div className="template-title">{t.label}</div>
-                    <div className="template-task">{t.defaultTask}</div>
-                    <div className="template-interval">
-                      {INTERVAL_LABELS[t.defaultInterval]}
-                      {' \u00b7 '}
-                      first due {firstDueLabel(t.defaultDueInDays)}
-                    </div>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
+          <ApplianceTemplateGrid
+            selectedId={selectedTemplate}
+            pickedTaskIds={templatePicks}
+            onSelect={selectTemplate}
+            onToggleTask={toggleTemplateTask}
+          />
 
           <div className="divider">Or enter manually</div>
 
@@ -493,6 +476,7 @@ export default function Onboarding() {
                     onClick={() => {
                       setApplianceCategory(c);
                       setSelectedTemplate(null);
+                      setTemplatePicks([]);
                     }}
                   >
                     <CategoryIcon size={22} strokeWidth={1.8} />
@@ -592,7 +576,7 @@ export default function Onboarding() {
       </h1>
       <p className="wizard-subtitle">
         {addedAppliance
-          ? 'Its first reminder is already on your home screen.'
+          ? 'Its reminders are already on your home screen.'
           : 'Nothing to set up right now. Add an appliance whenever you want to start.'}
       </p>
 
