@@ -17,7 +17,6 @@ import {
   firstDueDate,
   toISODate,
 } from '../lib/suggestions';
-import ApplianceTemplateGrid from '../components/ApplianceTemplateGrid';
 
 type Step = 'welcome' | 'name' | 'terms' | 'home' | 'appliance' | 'done';
 
@@ -439,21 +438,11 @@ export default function Onboarding() {
         <div className="wizard-header">
           <h1 className="wizard-title">Add your first appliance</h1>
           <p className="wizard-subtitle">
-            Pick what you have and we'll set up its reminders. Trim the list
-            if you like.
+            Tell us what it is and we'll set up its reminders.
           </p>
         </div>
 
         <div className="wizard-content">
-          <ApplianceTemplateGrid
-            selectedId={selectedTemplate}
-            pickedTaskIds={templatePicks}
-            onSelect={selectTemplate}
-            onToggleTask={toggleTemplateTask}
-          />
-
-          <div className="divider">Or enter manually</div>
-
           <Input
             label="Name"
             value={applianceName}
