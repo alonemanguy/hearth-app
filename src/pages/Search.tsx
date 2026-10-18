@@ -4,10 +4,14 @@ import { motion, useReducedMotion } from 'motion/react';
 import Screen from '../components/Screen';
 import Header from '../components/Header';
 import Input from '../components/Input';
+import Card from '../components/Card';
+import TaskRow from '../components/TaskRow';
+import Skeleton from '../components/Skeleton';
+import EmptyState from '../components/EmptyState';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
-import { Task, Appliance } from '../lib/types';
-import { Icon } from '../lib/icons';
+import { Task, Appliance, CATEGORY_LABELS } from '../lib/types';
+import { CATEGORY_ICON_NAMES, Icon } from '../lib/icons';
 import { easings } from '../lib/motion';
 
 export default function Search() {
@@ -17,7 +21,7 @@ export default function Search() {
   const [query, setQuery] = useState('');
   const [tasks, setTasks] = useState<Task[]>([]);
   const [appliances, setAppliances] = useState<Appliance[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user) return;
@@ -35,20 +39,21 @@ export default function Search() {
     setLoading(false);
   };
 
-  const filteredTasks = tasks.filter((t) =>
-    t.title.toLowerCase().includes(query.toLowerCase())
-  );
-  const filteredAppliances = appliances.filter((a) =>
-    a.name.toLowerCase().includes(query.toLowerCase())
-  );
+  const q = query.trim().toLowerCase();
+  const filteredTasks = q
+    ? tasks.filter((t) => t.title.toLowerCase().includes(q))
+    : [];
+  const filteredAppliances = q
+    ? appliances.filter((a) => a.name.toLowerCase().includes(q))
+    : [];
 
   if (loading) {
     return (
       <Screen>
         <Header title="Search" onBack={() => navigate(-1)} />
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600" />
-        </div>
+        <Skeleton height={56} />
+        <div style={{ height: 20 }} />
+        <Skeleton height="140px" />
       </Screen>
     );
   }
@@ -60,69 +65,76 @@ export default function Search() {
         initial={reduce ? false : { opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: easings.easeOutExpo }}
-        className="p-4"
       >
         <Input
           label="Search tasks and appliances"
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={setQuery}
           placeholder="e.g. HVAC filter, fridge..."
           autoFocus
         />
-        {query.trim() === '' && (
-          <div className="mt-8 p-4 rounded-lg bg-gray-50 border border-gray-200">
-            <p className="text-gray-500 text-sm">Type to search your tasks and appliances.</p>
-          </div>
+
+        {q === '' && (
+          <EmptyState
+            icon="search"
+            title="Find anything at home"
+            body="Search by task or appliance name, like 'filter' or 'fridge'."
+          />
         )}
-        {query.trim() !== '' && filteredTasks.length === 0 && filteredAppliances.length === 0 && (
-          <div className="mt-8 p-4 rounded-lg bg-gray-50 border border-gray-200">
-            <p className="text-gray-500 text-sm">No results found for "{query}"</p>
-          </div>
+
+        {q !== '' && filteredTasks.length === 0 && filteredAppliances.length === 0 && (
+          <EmptyState
+            icon="search"
+            title="No matches"
+            body={`Nothing matches "${query.trim()}". Try a shorter word.`}
+          />
         )}
+
         {filteredTasks.length > 0 && (
-          <div className="mt-6">
-            <h3 className="mb-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Tasks</h3>
-            {filteredTasks.map((t) => (
-              <button
-                key={t.id}
-                type="button"
-                onClick={() => navigate(`/detail/${t.id}`)}
-                className="w-full flex items-center justify-between px-4 py-3 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 transition-colors"
-              >
-                <div className="flex items-center gap-3">
-                  <Icon name="task" size={18} className="text-gray-400" />
-                  <div>
-                    <div className="text-sm font-medium text-gray-900">{t.title}</div>
-                    <div className="text-xs text-gray-500">
-                      Due {new Date(t.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+          <div className="section">
+            <h2 className="section-title">Tasks</h2>
+            <Card>
+              {filteredTasks.map((t) => (
+                <TaskRow
+                  key={t.id}
+                  id={t.id}
+                  icon="task"
+                  title={t.title}
+                  subtitle={`Due ${new Date(t.due_date).toLocaleDateString(
+                    'en-US',
+                    { month: 'short', day: 'numeric' }
+                  )}`}
+                  status={t.status}
+                />
+              ))}
+            </Card>
+          </div>
+        )}
+
+        {filteredAppliances.length > 0 && (
+          <div className="section">
+            <h2 className="section-title">Appliances</h2>
+            <Card>
+              {filteredAppliances.map((a) => (
+                <div
+                  key={a.id}
+                  className="task-row"
+                  onClick={() => navigate(`/appliance/${a.id}`)}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <div className="task-icon">
+                    <Icon name={CATEGORY_ICON_NAMES[a.category]} size={20} />
+                  </div>
+                  <div className="task-info">
+                    <div className="task-title">{a.name}</div>
+                    <div className="task-subtitle">
+                      {CATEGORY_LABELS[a.category]}
                     </div>
                   </div>
+                  <Icon name="chevronRight" size={16} className="row-chevron" />
                 </div>
-                <Icon name="chevronRight" size={16} className="text-gray-400" />
-              </button>
-            ))}
-          </div>
-        )}
-        {filteredAppliances.length > 0 && (
-          <div className="mt-6">
-            <h3 className="mb-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Appliances</h3>
-            {filteredAppliances.map((a) => (
-              <button
-                key={a.id}
-                type="button"
-                onClick={() => navigate(`/appliance/${a.id}`)}
-                className="w-full flex items-center justify-between px-4 py-3 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 transition-colors"
-              >
-                <div className="flex items-center gap-3">
-                  <Icon name="appliance" size={18} className="text-gray-400" />
-                  <div>
-                    <div className="text-sm font-medium text-gray-900">{a.name}</div>
-                    <div className="text-xs text-gray-500">{a.category}</div>
-                  </div>
-                </div>
-                <Icon name="chevronRight" size={16} className="text-gray-400" />
-              </button>
-            ))}
+              ))}
+            </Card>
           </div>
         )}
       </motion.div>

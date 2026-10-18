@@ -3,35 +3,32 @@ import { useNavigate } from 'react-router-dom';
 import { motion, useReducedMotion } from 'motion/react';
 import Screen from '../components/Screen';
 import Header from '../components/Header';
-import Card from '../components/Card';
-import Toast from '../components/Toast';
+import Skeleton from '../components/Skeleton';
 import EmptyState from '../components/EmptyState';
+import ScoreRing, { scoreColor } from '../components/ScoreRing';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
 import { easings } from '../lib/motion';
 import { Task, Appliance, Property } from '../lib/types';
-import { Icon } from '../lib/icons';
-import { computeHealthReport } from '../lib/health';
+import { computeHealthReport, HealthReport } from '../lib/health';
+
+const EMPTY_REPORT: HealthReport = {
+  total: 0,
+  category: 'needs_work',
+  categoryLabel: 'Needs work',
+  categoryBlurb: '',
+  sections: [],
+  recommendations: [],
+};
 
 export default function Health() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const reduce = useReducedMotion();
   const [loading, setLoading] = useState(true);
-  const [report, setReport] = setReportPlaceholder();
-  const [toastMessage, setToastMessage] = useState('');
-  const [toastVisible, setToastVisible] = useState(false);
-
-  function setReportPlaceholder() {
-    return {
-      total: 0,
-      category: 'needs_work' as const,
-      categoryLabel: 'Needs work',
-      categoryBlurb: '',
-      sections: [] as { key: string; label: string; score: number; max: number; icon: string; hint: string }[],
-      recommendations: [] as { id: string; title: string; body: string; points: number; linkTo: string; icon: string }[],
-    };
-  }
+  const [failed, setFailed] = useState(false);
+  const [hasData, setHasData] = useState(false);
+  const [report, setReport] = useState<HealthReport>(EMPTY_REPORT);
 
   useEffect(() => {
     if (!user) return;
@@ -39,6 +36,7 @@ export default function Health() {
   }, [user]);
 
   const fetchHealth = async () => {
+    setFailed(false);
     setLoading(true);
     const [tasksRes, appliancesRes, propertyRes] = await Promise.all([
       supabase.from('tasks').select('*').order('due_date', { ascending: true }),
@@ -47,7 +45,11 @@ export default function Health() {
     ]);
 
     if (tasksRes.error || appliancesRes.error || propertyRes.error) {
-      console.error('Error fetching health data:', tasksRes.error || appliancesRes.error || propertyRes.error);
+      console.error(
+        'Error fetching health data:',
+        tasksRes.error || appliancesRes.error || propertyRes.error
+      );
+      setFailed(true);
       setLoading(false);
       return;
     }
@@ -56,30 +58,50 @@ export default function Health() {
     const appliances = (appliancesRes.data as Appliance[]) ?? [];
     const property = (propertyRes.data as Property) ?? null;
 
-    const report = computeHealthReport(property, appliances, tasks);
-    setReport(report);
+    setReport(computeHealthReport(property, appliances, tasks));
+    setHasData(tasks.length > 0 || appliances.length > 0 || property !== null);
     setLoading(false);
-  };
-
-  const showToast = (msg: string) => {
-    setToastMessage(msg);
-    setToastVisible(true);
-  };
-
-  const sectionColor = (score: number, max: number) => {
-    const ratio = score / max;
-    if (ratio >= 0.8) return '#10B981';
-    if (ratio >= 0.5) return '#F59E0B';
-    return '#EF4444';
   };
 
   if (loading) {
     return (
       <Screen>
         <Header title="Home Health" onBack={() => navigate(-1)} />
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600" />
-        </div>
+        <Skeleton height={96} />
+        <div style={{ height: 24 }} />
+        <Skeleton height="180px" />
+        <div style={{ height: 16 }} />
+        <Skeleton height="120px" />
+      </Screen>
+    );
+  }
+
+  if (failed) {
+    return (
+      <Screen>
+        <Header title="Home Health" onBack={() => navigate(-1)} />
+        <EmptyState
+          icon="alert"
+          title="Home health didn't load"
+          body="We couldn't reach your data. Check your connection and try again."
+          ctaLabel="Try again"
+          onCta={() => void fetchHealth()}
+        />
+      </Screen>
+    );
+  }
+
+  if (!hasData) {
+    return (
+      <Screen>
+        <Header title="Home Health" onBack={() => navigate(-1)} />
+        <EmptyState
+          icon="home"
+          title="Not enough to score yet"
+          body="Add an appliance and a couple of tasks, and your home health score will show up here."
+          ctaLabel="Back to home"
+          onCta={() => navigate('/')}
+        />
       </Screen>
     );
   }
@@ -91,16 +113,9 @@ export default function Health() {
         initial={reduce ? false : { opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: easings.easeOutExpo }}
-        className="p-4"
       >
         <div className="health-header">
-          <div className="health-score-ring">
-            <div className="health-score-circle" style={{
-              borderColor: sectionColor(report.total, 100),
-              borderTopColor: 'transparent',
-            }} />
-            <div className="health-score-number">{report.total}</div>
-          </div>
+          <ScoreRing score={report.total} size={88} strokeWidth={8} />
           <div className="health-score-info">
             <div className="health-score-label">{report.categoryLabel}</div>
             <div className="health-score-blurb">{report.categoryBlurb}</div>
@@ -123,14 +138,19 @@ export default function Health() {
                   <div className="health-section-hint">{s.hint}</div>
                 </div>
                 <div className="health-section-score">
-                  <div className="health-section-score-value">{s.score}</div>
-                  <div className="health-section-score-max">/{s.max}</div>
+                  <span className="health-section-score-value">{s.score}</span>
+                  <span className="health-section-score-max">/{s.max}</span>
                 </div>
                 <div className="health-section-bar">
-                  <div className="health-section-bar-fill" style={{
-                    width: `${Math.round((s.score / s.max) * 100)}%`,
-                    backgroundColor: sectionColor(s.score, s.max),
-                  }} />
+                  <div
+                    className="health-section-bar-fill"
+                    style={{
+                      width: `${Math.round((s.score / s.max) * 100)}%`,
+                      backgroundColor: scoreColor(
+                        Math.round((s.score / s.max) * 100)
+                      ),
+                    }}
+                  />
                 </div>
               </motion.div>
             ))}
@@ -138,44 +158,38 @@ export default function Health() {
         </div>
 
         {report.recommendations.length > 0 && (
-          <motion.div
-            initial={reduce ? false : { opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, ease: easings.easeOutExpo }}
-            className="mt-6"
-          >
+          <div className="health-recommendations">
             <h3 className="health-sections-title">Recommended next steps</h3>
             <div className="health-recommendations-list">
               {report.recommendations.map((r) => (
-                <motion.div
+                <div
                   key={r.id}
-                  initial={reduce ? false : { opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: reduce ? 0 : 0.03 }}
                   className="health-recommendation-item"
+                  onClick={() => navigate(r.linkTo)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') navigate(r.linkTo);
+                  }}
                 >
                   <div className="health-recommendation-info">
                     <div className="health-recommendation-title">{r.title}</div>
                     <div className="health-recommendation-body">{r.body}</div>
                   </div>
                   <div className="health-recommendation-points">+{r.points}</div>
-                </motion.div>
+                </div>
               ))}
             </div>
-          </motion.div>
+          </div>
         )}
 
         <div className="health-footer">
           <p className="health-footer-text">
-            Your score goes up as you add appliances, track warranties, and complete tasks.
+            Your score goes up as you add appliances, track warranties, and
+            complete tasks.
           </p>
         </div>
       </motion.div>
-      <Toast
-        message={toastMessage}
-        visible={toastVisible}
-        onHide={() => setToastVisible(false)}
-      />
     </Screen>
   );
 }

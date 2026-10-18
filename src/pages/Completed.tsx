@@ -5,6 +5,7 @@ import Screen from '../components/Screen';
 import Header from '../components/Header';
 import Card from '../components/Card';
 import Toast from '../components/Toast';
+import Skeleton from '../components/Skeleton';
 import EmptyState from '../components/EmptyState';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
@@ -19,6 +20,7 @@ export default function Completed() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [toastMessage, setToastMessage] = useState('');
+  const [toastTone, setToastTone] = useState<'default' | 'error'>('default');
   const [toastVisible, setToastVisible] = useState(false);
 
   useEffect(() => {
@@ -32,8 +34,7 @@ export default function Completed() {
       .from('tasks')
       .select('*')
       .eq('status', 'done')
-      .order('last_completed', { ascending: false })
-      .maybeSingle();
+      .order('last_completed', { ascending: false });
 
     if (error) {
       console.error('Error fetching completed tasks:', error);
@@ -45,8 +46,9 @@ export default function Completed() {
     setLoading(false);
   };
 
-  const showToast = (msg: string) => {
+  const showToast = (msg: string, tone: 'default' | 'error' = 'default') => {
     setToastMessage(msg);
+    setToastTone(tone);
     setToastVisible(true);
   };
 
@@ -59,7 +61,7 @@ export default function Completed() {
 
     if (error) {
       console.error('Error restoring task:', error);
-      showToast('Could not restore task');
+      showToast('Could not restore task', 'error');
       return;
     }
 
@@ -80,9 +82,7 @@ export default function Completed() {
     return (
       <Screen>
         <Header title="Completed" onBack={() => navigate(-1)} />
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600" />
-        </div>
+        <Skeleton height="160px" />
       </Screen>
     );
   }
@@ -103,11 +103,9 @@ export default function Completed() {
           initial={reduce ? false : { opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, ease: easings.easeOutExpo }}
-          className="p-4"
+          className="section"
         >
-          <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">
-            Completed tasks
-          </h2>
+          <h2 className="section-title">Completed tasks</h2>
           <Card>
             {tasks.map((task) => (
               <motion.div
@@ -115,23 +113,21 @@ export default function Completed() {
                 initial={reduce ? false : { opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: reduce ? 0 : 0.02 }}
-                className="flex items-center justify-between px-4 py-3 border-b border-gray-100 last:border-0"
+                className="task-row"
               >
-                <div className="flex items-center gap-3">
-                  <Icon name="check" size={18} className="text-green-500" />
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-gray-900 truncate">
-                      {task.title}
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      Completed {formatDate(task.last_completed)}
-                    </div>
+                <div className="task-icon">
+                  <Icon name="check" size={20} />
+                </div>
+                <div className="task-info">
+                  <div className="task-title">{task.title}</div>
+                  <div className="task-subtitle">
+                    Completed {formatDate(task.last_completed)}
                   </div>
                 </div>
                 <button
                   type="button"
-                  onClick={() => handleRestore(task)}
-                  className="text-xs text-green-600 hover:text-green-800 font-medium px-2 py-1"
+                  className="row-action"
+                  onClick={() => void handleRestore(task)}
                 >
                   Restore
                 </button>
@@ -143,6 +139,7 @@ export default function Completed() {
       <Toast
         message={toastMessage}
         visible={toastVisible}
+        tone={toastTone}
         onHide={() => setToastVisible(false)}
       />
     </Screen>

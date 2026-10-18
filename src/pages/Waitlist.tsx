@@ -5,6 +5,7 @@ import Screen from '../components/Screen';
 import Header from '../components/Header';
 import Input from '../components/Input';
 import Button from '../components/Button';
+import { Icon } from '../lib/icons';
 import { supabase } from '../lib/supabase';
 import { easings } from '../lib/motion';
 
@@ -28,7 +29,12 @@ export default function Waitlist() {
     setSubmitting(false);
 
     if (err) {
-      setError(err.message);
+      if (err.code === '23505') {
+        // Already on the list — that's the outcome they wanted anyway.
+        setSubmitted(true);
+        return;
+      }
+      setError("That didn't go through. Try again in a moment.");
       return;
     }
 
@@ -43,18 +49,18 @@ export default function Waitlist() {
           initial={reduce ? false : { opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, ease: easings.easeOutExpo }}
-          className="p-6 text-center"
+          style={{ textAlign: 'center', paddingTop: 24 }}
         >
-          <div className="flex items-center justify-center w-16 h-16 rounded-full bg-green-100 mb-6 mx-auto">
-            <Icon name="check" size={32} className="text-green-600" />
+          <div className="auth-success-icon">
+            <Icon name="check" size={32} strokeWidth={1.6} />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">You're on the waitlist</h1>
-          <p className="text-gray-600 mb-6">
+          <h1 className="auth-title" style={{ marginBottom: 12 }}>
+            You're on the waitlist
+          </h1>
+          <p className="auth-subtitle" style={{ marginBottom: 24 }}>
             We'll let you know when Hearth is ready for you.
           </p>
-          <Button onClick={() => navigate('/login')} className="w-full">
-            Go to login
-          </Button>
+          <Button onClick={() => navigate('/login')}>Go to login</Button>
         </motion.div>
       </Screen>
     );
@@ -62,41 +68,45 @@ export default function Waitlist() {
 
   return (
     <Screen>
-      <Header title="Join the Waitlist" onBack={() => navigate('/welcome')} />
+      <Header title="Join the waitlist" onBack={() => navigate('/welcome')} />
       <motion.div
         initial={reduce ? false : { opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: easings.easeOutExpo }}
-        className="p-6"
       >
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Hearth is coming soon</h1>
-        <p className="text-gray-600 mb-8">
-          We're opening up to a small group of homeowners first. Enter your email and we'll let you know when it's your turn.
+        <h1 className="auth-title" style={{ marginBottom: 12 }}>
+          Hearth is coming soon
+        </h1>
+        <p className="auth-subtitle" style={{ marginBottom: 20 }}>
+          We're opening up to a small group of homeowners first. Enter your
+          email and we'll let you know when it's your turn.
         </p>
+
         {error && (
-          <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
+          <div className="form-error" role="alert">
             {error}
           </div>
         )}
-        <form onSubmit={handleSubmit} className="space-y-4">
+
+        <form onSubmit={handleSubmit}>
           <Input
             label="Email address"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={setEmail}
             placeholder="you@example.com"
             type="email"
             required
           />
-          <Button
-            type="submit"
-            disabled={submitting || !email.trim()}
-            className="w-full"
-          >
+          <Button type="submit" disabled={submitting || !email.trim()}>
             {submitting ? 'Joining...' : 'Join waitlist'}
           </Button>
         </form>
-        <p className="mt-6 text-xs text-gray-400 text-center">
-          No spam. Home OS for every homeowner.
+
+        <p
+          className="auth-subtitle"
+          style={{ fontSize: 13, marginTop: 20, textAlign: 'center' }}
+        >
+          No spam. We'll only email you when your invite is ready.
         </p>
       </motion.div>
     </Screen>

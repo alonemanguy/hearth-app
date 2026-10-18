@@ -47,6 +47,8 @@ import {
   Loader as IconLoader,
   Circle as IconCircle,
   Flame as IconFlame,
+  ListChecks as IconListChecks,
+  RefreshCw as IconRefreshCw,
 } from 'lucide-react';
 import type { ApplianceCategory, HelpLevel } from './types';
 
@@ -97,6 +99,8 @@ export const ICONS = {
   loader: IconLoader,
   circle: IconCircle,
   flame: IconFlame,
+  task: IconListChecks,
+  refreshCw: IconRefreshCw,
   // category aliases — so tasks/rows can use a single named icon
   hvac: IconWind,
   plumbing: IconDroplets,

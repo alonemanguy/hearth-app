@@ -3039,3 +3039,239 @@ svg { display: block; flex-shrink: 0; }
   line-height: 1.45;
   color: var(--color-text-muted);
 }
+
+/* ================================================================
+ * Screens that shipped without styles: home health detail,
+ * search rows, completed restore, waitlist, and the onboarding
+ * appliance templates.
+ * ================================================================ */
+
+/* --- Home health detail --- */
+.health-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+.health-score-info {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.health-score-label {
+  font-family: var(--font-heading);
+  font-size: 20px;
+  font-weight: 600;
+}
+.health-score-blurb {
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--color-text-muted);
+}
+.health-sections-title {
+  font-family: var(--font-heading);
+  font-size: 18px;
+  font-weight: 600;
+  margin: var(--space-6) 0 var(--space-1);
+}
+.health-sections-list {
+  display: flex;
+  flex-direction: column;
+}
+.health-section-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  column-gap: var(--space-4);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+.health-section-item:last-child {
+  border-bottom: none;
+}
+.health-section-info {
+  min-width: 0;
+}
+.health-section-name {
+  font-weight: 600;
+  font-size: 15px;
+}
+.health-section-hint {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+.health-section-score {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+  white-space: nowrap;
+}
+.health-section-score-value {
+  font-family: var(--font-heading);
+  font-size: 17px;
+  font-weight: 600;
+}
+.health-section-score-max {
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+.health-section-bar {
+  grid-column: 1 / -1;
+  height: 6px;
+  margin-top: var(--space-2);
+  background: var(--color-background);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+}
+.health-section-bar-fill {
+  height: 100%;
+  border-radius: var(--radius-pill);
+}
+.health-recommendations {
+  margin-top: var(--space-2);
+}
+.health-recommendations-list {
+  display: flex;
+  flex-direction: column;
+}
+.health-recommendation-item {
+  display: flex;
+  width: 100%;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border: 0;
+  border-bottom: 1px solid var(--color-border);
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.health-recommendation-item:last-child {
+  border-bottom: none;
+}
+.health-recommendation-info {
+  flex: 1;
+  min-width: 0;
+}
+.health-recommendation-title {
+  font-weight: 600;
+  font-size: 15px;
+  transition: color 0.15s ease;
+}
+.health-recommendation-item:hover .health-recommendation-title {
+  color: var(--color-primary);
+}
+.health-recommendation-body {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+.health-recommendation-points {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--color-success);
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* --- Shared list-row extras (search, completed) --- */
+.row-chevron {
+  color: var(--color-text-muted);
+  opacity: 0.6;
+  flex-shrink: 0;
+}
+.row-action {
+  background: none;
+  border: none;
+  color: var(--color-primary);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 6px 4px;
+  flex-shrink: 0;
+}
+.row-action:hover {
+  color: var(--color-primary-hover);
+}
+
+/* --- Onboarding appliance templates --- */
+.template-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+@media (max-width: 360px) {
+  .template-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.template-card {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  text-align: left;
+  padding: var(--space-3);
+  background: var(--color-surface);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+.template-card:hover {
+  border-color: var(--color-primary);
+}
+.template-card--active {
+  border-color: var(--color-primary);
+  background: rgba(31, 77, 58, 0.05);
+}
+.template-icon {
+  color: var(--color-primary);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.template-info {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.template-grid .template-title {
+  font-weight: 600;
+  font-size: 15px;
+  line-height: 1.25;
+}
+.template-grid .template-task {
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--color-text-muted);
+}
+.template-grid .template-interval {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  opacity: 0.85;
+}
+.divider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: var(--space-6) 0 var(--space-4);
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--color-border);
+}
