@@ -16,22 +16,22 @@ importers:
         version: 2.118.0
       lucide-react:
         specifier: ^0.400.0
-        version: 0.400.0(react@19.3.1)
+        version: 0.400.0(react@19.2.4)
       motion:
         specifier: ^11.18.2
-        version: 11.18.2(react-dom@19.2.4(react@19.3.1))(react@19.3.1)
+        version: 11.18.2(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       posthog-js:
         specifier: ^1.152.0
-        version: 1.438.12(@types/react@19.3.0)(react@19.3.1)
+        version: 1.438.12(@types/react@19.2.14)(react@19.2.4)
       react:
-        specifier: ^19.3.1
-        version: 19.3.1
+        specifier: ^19.0.0
+        version: 19.2.4
       react-dom:
         specifier: ^19.0.0
-        version: 19.2.4(react@19.3.1)
+        version: 19.2.4(react@19.2.4)
       react-router-dom:
         specifier: ^7.18.4
-        version: 7.18.4(react-dom@19.2.4(react@19.3.1))(react@19.3.1)
+        version: 7.18.4(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
     devDependencies:
       '@tailwindcss/vite':
         specifier: ^4.0.0
@@ -40,11 +40,11 @@ importers:
         specifier: ^22.0.0
         version: 22.19.17
       '@types/react':
-        specifier: ^19.3.0
-        version: 19.3.0
+        specifier: ^19.0.0
+        version: 19.2.14
       '@types/react-dom':
         specifier: ^19.0.0
-        version: 19.2.3(@types/react@19.3.0)
+        version: 19.2.3(@types/react@19.2.14)
       '@vitejs/plugin-react':
         specifier: ^6.0.0
         version: 6.0.1(vite@8.3.4(@types/node@22.19.17)(jiti@2.6.1))
@@ -371,8 +371,8 @@ packages:
     peerDependencies:
       '@types/react': ^19.2.0
 
-  '@types/react@19.3.0':
-    resolution: {integrity: sha512-N0rFCuH9YoxG9/m61l9MfpJKfmLOVU0em7ipIz6TRgSSkvReLB9vL85GB+yr8Bs5leqpvg96JSwF4ZS1s4viQg==}
+  '@types/react@19.2.14':
+    resolution: {integrity: sha512-ilcTH/UniCkMdtexkoCN0bI7pMcJDvmQFPvuPvmEaYA/NSfFTAgdUSLAoVjaRJm7+6PvcM+q1zYOwS4wTYMF9w==}
 
   '@types/trusted-types@2.0.7':
     resolution: {integrity: sha512-ScaPdn1dQczgbl0QFTeTOmVHFULt394XJgOQNoyVhZ6r2vLnMLJfBPd53SB52T/3G36VI1/g2MZaX0cwDuXsfw==}
@@ -694,8 +694,8 @@ packages:
       react-dom:
         optional: true
 
-  react@19.3.1:
-    resolution: {integrity: sha512-QNhWdt7nrgVWWQG58QuGsAR3jv3Hbe4mb4vz7w2csnHavciZJgda1CPNaldF6eVxv90ud3jUXpKlHL69gO38yw==}
+  react@19.2.4:
+    resolution: {integrity: sha512-9nfp2hYpCwOjAN+8TZFGhtWEwgvWHXqESH8qT89AT/lWklpLON22Lc8pEtnpsZz7VmawabSU0gCjnj8aC0euHQ==}
     engines: {node: '>=0.10.0'}
 
   rolldown@1.2.14:
@@ -995,11 +995,11 @@ snapshots:
     dependencies:
       undici-types: 6.21.0
 
-  '@types/react-dom@19.2.3(@types/react@19.3.0)':
+  '@types/react-dom@19.2.3(@types/react@19.2.14)':
     dependencies:
-      '@types/react': 19.3.0
+      '@types/react': 19.2.14
 
-  '@types/react@19.3.0':
+  '@types/react@19.2.14':
     dependencies:
       csstype: 3.2.3
 
@@ -1034,14 +1034,14 @@ snapshots:
 
   fflate@0.4.9: {}
 
-  framer-motion@11.18.2(react-dom@19.2.4(react@19.3.1))(react@19.3.1):
+  framer-motion@11.18.2(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
     dependencies:
       motion-dom: 11.18.1
       motion-utils: 11.18.1
       tslib: 2.8.1
     optionalDependencies:
-      react: 19.3.1
-      react-dom: 19.2.4(react@19.3.1)
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
 
   fsevents@2.3.3:
     optional: true
@@ -1150,9 +1150,9 @@ snapshots:
       lightningcss-win32-arm64-msvc: 1.33.0
       lightningcss-win32-x64-msvc: 1.33.0
 
-  lucide-react@0.400.0(react@19.3.1):
+  lucide-react@0.400.0(react@19.2.4):
     dependencies:
-      react: 19.3.1
+      react: 19.2.4
 
   magic-string@0.30.21:
     dependencies:
@@ -1164,13 +1164,13 @@ snapshots:
 
   motion-utils@11.18.1: {}
 
-  motion@11.18.2(react-dom@19.2.4(react@19.3.1))(react@19.3.1):
+  motion@11.18.2(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
     dependencies:
-      framer-motion: 11.18.2(react-dom@19.2.4(react@19.3.1))(react@19.3.1)
+      framer-motion: 11.18.2(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       tslib: 2.8.1
     optionalDependencies:
-      react: 19.3.1
-      react-dom: 19.2.4(react@19.3.1)
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
 
   nanoid@3.3.20: {}
 
@@ -1195,7 +1195,7 @@ snapshots:
       picocolors: 1.1.1
       source-map-js: 1.2.2
 
-  posthog-js@1.438.12(@types/react@19.3.0)(react@19.3.1):
+  posthog-js@1.438.12(@types/react@19.2.14)(react@19.2.4):
     dependencies:
       '@posthog/browser-common': 0.9.5
       '@posthog/core': 1.59.1
@@ -1208,8 +1208,8 @@ snapshots:
       web-vitals: 6.2.3
       web-vitals-soft-navs: web-vitals@6.2.1
     optionalDependencies:
-      '@types/react': 19.3.0
-      react: 19.3.1
+      '@types/react': 19.2.14
+      react: 19.2.4
     transitivePeerDependencies:
       - preact-render-to-string
 
@@ -1217,26 +1217,26 @@ snapshots:
 
   query-selector-shadow-dom@1.0.1: {}
 
-  react-dom@19.2.4(react@19.3.1):
+  react-dom@19.2.4(react@19.2.4):
     dependencies:
-      react: 19.3.1
+      react: 19.2.4
       scheduler: 0.27.0
 
-  react-router-dom@7.18.4(react-dom@19.2.4(react@19.3.1))(react@19.3.1):
+  react-router-dom@7.18.4(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
     dependencies:
-      react: 19.3.1
-      react-dom: 19.2.4(react@19.3.1)
-      react-router: 7.18.4(react-dom@19.2.4(react@19.3.1))(react@19.3.1)
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
+      react-router: 7.18.4(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
 
-  react-router@7.18.4(react-dom@19.2.4(react@19.3.1))(react@19.3.1):
+  react-router@7.18.4(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
     dependencies:
       cookie: 1.1.1
-      react: 19.3.1
+      react: 19.2.4
       set-cookie-parser: 2.7.2
     optionalDependencies:
-      react-dom: 19.2.4(react@19.3.1)
+      react-dom: 19.2.4(react@19.2.4)
 
-  react@19.3.1: {}
+  react@19.2.4: {}
 
   rolldown@1.2.14:
     dependencies:
