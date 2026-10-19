@@ -9,8 +9,9 @@ one place, and get reminded before something is due.
 Early public beta · [Hosted demo](https://gethearth.vercel.app) · [Self-hosting](#self-hosting)
 
 <p align="center">
-  <img src="docs/screenshots/home.png" width="330" alt="The home screen: this month's tasks and the home health score">
-  <img src="docs/screenshots/add-appliance.png" width="330" alt="Adding an appliance, starting from a list of common appliances">
+  <img src="docs/screenshots/home.png" width="260" alt="The home screen: this month's tasks and the home health score">
+  <img src="docs/screenshots/add-appliance.png" width="260" alt="Adding an appliance, starting from a list of common appliances">
+  <img src="docs/screenshots/onboarding.png" width="260" alt="The first onboarding step, choosing how much guidance you want">
 </p>
 
 ## What it does
