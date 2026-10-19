@@ -2,9 +2,9 @@
 
 ## Reporting a vulnerability
 
-Open a private security advisory on this repository, or contact the maintainer
-through the profile linked on the repository page. Please do not open a public
-issue for anything exploitable.
+Use the **Report a vulnerability** button on this repository's Security tab to
+open a private advisory, or contact the maintainer through the profile linked on
+the repository page. Please do not open a public issue for anything exploitable.
 
 A useful report says what you did, what happened, and what you expected
 instead. A minimal reproduction helps more than a long write-up.
