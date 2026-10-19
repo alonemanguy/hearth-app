@@ -1,0 +1,48 @@
+name: Bug report
+description: Something in Hearth does not work as expected.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Security problems do not belong here. Use the private advisory link on
+        the previous screen instead.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you did, what happened, and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open the appliance list
+        2. ...
+    validations:
+      required: true
+  - type: input
+    id: where
+    attributes:
+      label: Where
+      description: The hosted demo, your own deployment, or a local dev server.
+      placeholder: https://gethearth.vercel.app
+    validations:
+      required: false
+  - type: input
+    id: environment
+    attributes:
+      label: Browser and version
+      placeholder: Firefox 141 on Windows 11
+    validations:
+      required: false
+  - type: textarea
+    id: console
+    attributes:
+      label: Console output
+      description: Anything the browser console shows, if anything.
+      render: text
+    validations:
+      required: false
