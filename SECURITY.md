@@ -81,8 +81,8 @@ flowchart TB
     EdgeFn -->|"service role key,<br/>never in the browser"| Postgres
     Waitlist -->|"only anonymous write:<br/>trigger checks the address<br/>and rate limits per IP"| Postgres
 
-    style Browser fill:#fff7ed,stroke:#ea580c
-    style EdgeFn fill:#eef2ff,stroke:#4f46e5
+    style Browser stroke:#ea580c,stroke-width:2px
+    style EdgeFn stroke:#4f46e5,stroke-width:2px
 ```
 
 ## Out of scope
