@@ -49,6 +49,42 @@ instead. A minimal reproduction helps more than a long write-up.
   belongs only in server-side environments such as a Supabase edge function.
 - Security headers and a Content Security Policy are set in `vercel.json`.
 
+The shape of it, with the browser treated as untrusted and the database as the
+only thing that decides:
+
+```mermaid
+flowchart TB
+    subgraph Browser["Browser (untrusted)"]
+        Anon["Public anon key<br/>ships in the bundle"]
+        JWT["Signed-in user's JWT"]
+    end
+
+    subgraph Supabase["Supabase, over HTTPS"]
+        Auth["Auth"]
+        API["PostgREST"]
+        subgraph Postgres["Postgres"]
+            RLS["Row Level Security<br/>every policy compares the row<br/>to (select auth.uid())"]
+        end
+        EdgeFn["Edge Functions<br/>delete-account, push sender"]
+        Waitlist["waitlist table"]
+    end
+
+    Rows["Rows owned by<br/>the signed-in user"]
+    Key["The anon key is public.<br/>RLS is the only boundary."]
+
+    Anon -->|"HTTPS"| Auth
+    JWT -->|"HTTPS"| API
+    Auth --> API
+    API --> RLS
+    RLS --> Rows
+    Key -.-> RLS
+    EdgeFn -->|"service role key,<br/>never in the browser"| Postgres
+    Waitlist -->|"only anonymous write:<br/>trigger checks the address<br/>and rate limits per IP"| Postgres
+
+    style Browser fill:#fff7ed,stroke:#ea580c
+    style EdgeFn fill:#eef2ff,stroke:#4f46e5
+```
+
 ## Out of scope
 
 - Anything that requires the service role key.
