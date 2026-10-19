@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.118.0",
-    "lucide-react": "^0.400.0",
+    "lucide-react": "^1.58.0",
     "motion": "^11.18.2",
     "posthog-js": "^1.152.0",
     "react": "^19.0.0",
