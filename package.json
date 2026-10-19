@@ -13,7 +13,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.117.3",
+    "@supabase/supabase-js": "^2.118.0",
     "lucide-react": "^0.400.0",
     "motion": "^11.18.2",
     "posthog-js": "^1.152.0",
