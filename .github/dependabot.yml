@@ -9,6 +9,14 @@ updates:
     groups:
       development:
         dependency-type: development
+      # react and react-dom must stay on the same version, or the app throws
+      # "Incompatible React versions" at runtime instead of failing the build.
+      react:
+        patterns:
+          - react
+          - react-dom
+          - "@types/react"
+          - "@types/react-dom"
 
   - package-ecosystem: github-actions
     directory: /
