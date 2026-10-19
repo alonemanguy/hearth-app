@@ -143,6 +143,41 @@ arrive in the in-app notification list.
 - Report a vulnerability through the private advisory button described in
   [SECURITY.md](SECURITY.md) rather than a public issue.
 
+The trust boundary, drawn:
+
+```mermaid
+flowchart TB
+    subgraph Browser["Browser (untrusted)"]
+        Anon["Public anon key<br/>ships in the bundle"]
+        JWT["Signed-in user's JWT"]
+    end
+
+    subgraph Supabase["Supabase, over HTTPS"]
+        Auth["Auth"]
+        API["PostgREST"]
+        subgraph Postgres["Postgres"]
+            RLS["Row Level Security<br/>every policy compares the row<br/>to (select auth.uid())"]
+        end
+        EdgeFn["Edge Functions<br/>delete-account, push sender"]
+        Waitlist["waitlist table"]
+    end
+
+    Rows["Rows owned by<br/>the signed-in user"]
+    Key["The anon key is public.<br/>RLS is the only boundary."]
+
+    Anon -->|"HTTPS"| Auth
+    JWT -->|"HTTPS"| API
+    Auth --> API
+    API --> RLS
+    RLS --> Rows
+    Key -.-> RLS
+    EdgeFn -->|"service role key,<br/>never in the browser"| Postgres
+    Waitlist -->|"only anonymous write:<br/>trigger checks the address<br/>and rate limits per IP"| Postgres
+
+    style Browser stroke:#ea580c,stroke-width:2px
+    style EdgeFn stroke:#4f46e5,stroke-width:2px
+```
+
 ## Contributing
 
 Issues are welcome, and reports from people running Hearth against their own
