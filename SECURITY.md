@@ -34,6 +34,13 @@ instead. A minimal reproduction helps more than a long write-up.
   # []
   ```
 
+- **Write paths that need an account check for one themselves.**
+  `attempt_join_household` and `regenerate_invite_code` run as the function
+  owner, validate the caller with `auth.uid()`, and are not executable by
+  `anon` at all.
+- **The schema and its policies are in the repository** under
+  `supabase/migrations/`, so they can be reviewed and tested instead of taken
+  on trust. Nothing in them is a credential.
 - **The service role key is never in this repository.** It bypasses RLS, so it
   belongs only in server-side environments such as a Supabase edge function.
 - Security headers and a Content Security Policy are set in `vercel.json`.

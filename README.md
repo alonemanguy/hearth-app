@@ -65,14 +65,12 @@ public demo instance. Set both to run against your own project.
 Hearth needs a Supabase project for storage and authentication.
 
 1. Create a project at [supabase.com](https://supabase.com).
-2. Create the tables the client reads and writes: `properties`, `appliances`,
-   `tasks`, `households`, `household_members`, `notification_preferences`,
-   `notifications`, `push_subscriptions`, and `waitlist`. The columns each one
-   uses are listed in `src/lib/types.ts` and `src/lib/household.ts`.
-3. Turn on Row Level Security for every table and add policies that scope rows
-   to `auth.uid()`. The schema and the policies live in your Supabase project
-   and are deliberately not part of this repository, so no copy of them can go
-   stale or leak.
+2. Apply the migrations in `supabase/migrations/` in filename order. They create
+   every table, key, index, function, and policy the client expects.
+3. Keep Row Level Security on for every table. The migrations turn it on and
+   carry the policies, which are the source of truth for who can read what. If
+   you add a table, add policies that scope rows to `auth.uid()`; a table with
+   RLS on and no policy is readable by nobody, which is the safe default.
 4. Enable email and password auth, and decide whether new accounts must confirm
    their email before signing in.
 5. For push notifications, generate a VAPID key pair and deploy a Supabase edge
@@ -85,6 +83,8 @@ Hearth needs a Supabase project for storage and authentication.
   anywhere in the client, and there never should be one.
 - The Supabase anon key is not a secret. It is visible in every deployed
   bundle. Data protection comes from Row Level Security in the database.
+- The schema and the policies are in `supabase/migrations/` so they can be read
+  and audited rather than taken on trust. They contain no credentials.
 - Security headers and a Content Security Policy are set in `vercel.json`.
 - To report a vulnerability, see [SECURITY.md](SECURITY.md).
 
