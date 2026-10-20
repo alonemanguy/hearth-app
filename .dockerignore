@@ -1,0 +1,13 @@
+.git
+.github
+.figma
+node_modules
+dist
+coverage
+*.log
+
+# Never copy local environment files into the image. Values arrive as build
+# arguments from docker-compose.yml instead.
+.env
+.env.*
+!.env.example

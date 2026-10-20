@@ -2,6 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Live demo](https://img.shields.io/badge/demo-live-brightgreen.svg)](https://gethearth.vercel.app)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/alonemanguy/hearth-app)
 
 A home maintenance tracker. Keep every appliance, warranty, and service date in
 one place, and get reminded before something is due.
@@ -104,8 +105,31 @@ public demo instance. Set both to run against your own project.
 
 ## Self-hosting
 
-Hearth needs a Supabase project for storage and authentication.
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/alonemanguy/hearth-app)
 
+Hearth needs a Supabase project for storage and authentication. Two easy paths: Vercel (one click) or Docker.
+
+### Option 1: Vercel (recommended)
+1. Click the "Deploy with Vercel" button above. It clones the repo and asks for
+   environment variables.
+2. Follow steps 1 to 4 and 6 in the checklist below for Supabase.
+3. Add `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` to the Vercel project
+   when prompted (or later in Project settings > Environment variables).
+4. Deploy. The app is a static bundle with SPA rewrites; `vercel.json` in the
+   repo handles them.
+
+### Option 2: Docker Compose
+```bash
+cp .env.example .env
+# Edit .env to set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY
+docker compose up --build
+# Open http://localhost:8080
+```
+The image builds the Vite bundle with those values (all public/client-side),
+serves it with nginx, and redirects every route to `index.html`. See
+`Dockerfile` and `docker/nginx.conf` for details.
+
+### Supabase setup checklist
 1. Create a project at [supabase.com](https://supabase.com).
 2. Apply the migrations in `supabase/migrations/` in filename order. They create
    every table, key, index, function, and policy the client expects. Nothing else

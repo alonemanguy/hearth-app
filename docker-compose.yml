@@ -1,0 +1,30 @@
+# Hearth is a static bundle, so the image is a plain web server and nothing else:
+# no Node process at runtime, no database, no secrets baked in at build time.
+#
+# The Supabase URL and anon key reach the browser through Vite's `VITE_` build
+# arguments. Both are public values that ship inside the JavaScript, which is
+# why passing them as build arguments here is safe. Never add a service role key.
+#
+#   docker compose up --build
+#
+# Then open http://localhost:8080
+services:
+  web:
+    build:
+      context: .
+      args:
+        VITE_SUPABASE_URL: ${VITE_SUPABASE_URL:-}
+        VITE_SUPABASE_ANON_KEY: ${VITE_SUPABASE_ANON_KEY:-}
+        VITE_VAPID_PUBLIC_KEY: ${VITE_VAPID_PUBLIC_KEY:-}
+        VITE_POSTHOG_KEY: ${VITE_POSTHOG_KEY:-}
+        VITE_POSTHOG_HOST: ${VITE_POSTHOG_HOST:-}
+    image: hearth:local
+    ports:
+      - '8080:80'
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD', 'wget', '-q', '-O', '-', 'http://127.0.0.1/']
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
