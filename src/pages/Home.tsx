@@ -678,17 +678,25 @@ export default function Home() {
           </p>
           {health.recommendations && health.recommendations.length > 0 && (
             <div className="health-recommendations">
-              {health.recommendations.slice(0, 2).map((r) => (
-                <button
-                  key={r.id}
-                  type="button"
-                  className="health-recommendation"
-                  onClick={() => navigate(r.linkTo)}
-                >
-                  <span className="health-rec-title">{r.title}</span>
-                  <span className="health-rec-points">+{r.points}</span>
-                </button>
-              ))}
+              <div className="health-recommendations-list">
+                {health.recommendations.slice(0, 2).map((r) => (
+                  <div
+                    key={r.id}
+                    className="health-recommendation-item"
+                    onClick={() => navigate(r.linkTo)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') navigate(r.linkTo);
+                    }}
+                  >
+                    <div className="health-recommendation-info">
+                      <div className="health-recommendation-title">{r.title}</div>
+                    </div>
+                    <div className="health-recommendation-points">+{r.points}</div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </motion.div>
